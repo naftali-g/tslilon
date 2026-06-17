@@ -239,9 +239,11 @@
   var PHON = ['GLOTTAL','B','V','G','D','H','Z','X','T','Y','K','L','M','N','S','P','F','TS','R','SH'];
   var SOURCES = {GLOTTAL:'א/ע',B:'בּ',V:'ב/ו',G:'ג',D:'ד',H:'ה',Z:'ז',X:'ח/כ',T:'ט/ת',Y:'י',
                  K:'כּ/ק',L:'ל',M:'מ',N:'נ',S:'ס/שׂ',P:'פּ',F:'פ',TS:'צ',R:'ר',SH:'שׁ'};
-  // spoken sound per tile — the consonant voiced with a shva (homophone pairs share one sound)
-  var SOUNDS = {GLOTTAL:'אְ',B:'בְּ',V:'וְ',G:'גְ',D:'דְ',H:'הְ',Z:'זְ',X:'חְ',T:'טְ',Y:'יְ',
-                K:'כְּ',L:'לְ',M:'מְ',N:'נְ',S:'סְ',P:'פְּ',F:'פְ',TS:'צְ',R:'רְ',SH:'שְׁ'};
+  // spoken letter name(s) per tile — vocalized real words that begin with the target sound;
+  // homophone pairs name both letters that make the sound
+  var NAMES = {GLOTTAL:'אָלֶף, עַיִן',B:'בֵּית',V:'וֵית, וָו',G:'גִּימֶל',D:'דָּלֶת',H:'הֵא',Z:'זַיִן',
+               X:'חֵית, כָף',T:'טֵית, תָּו',Y:'יוֹד',K:'כָּף, קוֹף',L:'לָמֶד',M:'מֵם',N:'נוּן',
+               S:'סָמֶךְ, שִׂין',P:'פֵּא',F:'פֵא',TS:'צָדִי',R:'רֵישׁ',SH:'שִׁין'};
   // phoneme of one consonant occurrence (mirror of build_lexicon.py sound_of) — for highlighting
   var DAG='ּ',SHIN='ׁ',SIN='ׂ',HIRIQ='ִ',TSERE='ֵ', NIQ=/[֑-ׇ]/, HEBC=/[א-ת]/;
   var VOWELP={}; (function(){for(var v=0x05B0;v<0x05BC;v++)VOWELP[String.fromCharCode(v)]=1; VOWELP[String.fromCharCode(0x05C7)]=1;})();
@@ -414,7 +416,7 @@
       if(!feasible){ d.classList.remove('on'); d.setAttribute('aria-checked','false');
         var k=state.positions.indexOf(P); if(k>=0) state.positions.splice(k,1); }
     });
-    speak(SOUNDS[L]||SOURCES[L], false);   // say the chosen sound (skips the no-voice probe — short utterance)
+    speak(NAMES[L]||SOURCES[L], false);   // say the letter name(s) (skips the no-voice probe — short utterance)
     refreshGen();
   }
   function togglePos(P,d){
