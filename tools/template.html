@@ -39,22 +39,14 @@
     font-size:20px;display:grid;place-items:center;cursor:pointer;box-shadow:var(--shadow-sm)}
   .icon-btn:active{transform:scale(.94)}
 
-  .mascot{width:120px;height:120px;border-radius:50%;margin:8px auto 2px;display:grid;place-items:center;
-    font-family:var(--f-display);font-weight:700;font-size:66px;border:5px solid #fff;
-    background:var(--tile); color:var(--ink);
-    box-shadow:0 14px 28px rgba(43,43,54,.16); transition:transform .25s, background .25s}
-  .mascot.empty{background:#EDEBF4;color:#C7C2D6;box-shadow:none;font-size:40px}
-  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-  .mascot:not(.empty){animation:breathe 3.2s ease-in-out infinite}
-
   .seclabel{font-family:var(--f-round);font-weight:700;text-align:center;font-size:19px;margin:18px 0 2px}
   .hint{text-align:center;font-size:12.5px;color:var(--slate);margin:0 0 10px}
 
-  .lgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:6px}
-  @media(max-width:380px){.lgrid{grid-template-columns:repeat(5,1fr)}}
+  .lgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:6px}
   .tile{aspect-ratio:1;border:none;border-radius:14px;font-family:var(--f-round);font-weight:700;
     font-size:clamp(20px,6vw,26px);color:var(--ink);cursor:pointer;position:relative;
     box-shadow:var(--shadow-sm);transition:transform .12s}
+  .tile.multi{font-size:clamp(14px,4vw,18px);letter-spacing:-.5px}
   .tile:active{transform:scale(.92)}
   .tile.sel{transform:scale(1.08);box-shadow:0 0 0 4px var(--mango), 0 8px 16px rgba(43,43,54,.18)}
   .tile.sel::after{content:"✓";position:absolute;top:-7px;inset-inline-start:-7px;background:var(--mint);
@@ -165,11 +157,9 @@
       <button class="icon-btn" id="btnSettings" aria-label="הגדרות">⚙</button>
       <img class="logo-img" src="logo.webp" alt="אותיות מדברות">
     </div>
-    <div class="mascot empty" id="mascot" aria-hidden="true">?</div>
-
-    <div class="seclabel">בַּחֲרוּ אוֹת</div>
-    <div class="hint">סוֹפְרִים אֶת הָאוֹת הַכְּתוּבָה</div>
-    <div class="lgrid" id="lgrid" role="radiogroup" aria-label="בחרו אות"></div>
+    <div class="seclabel">בַּחֲרוּ צְלִיל</div>
+    <div class="hint">אוֹתִיּוֹת עִם אוֹתוֹ צְלִיל מְקֻבָּצוֹת יַחַד</div>
+    <div class="lgrid" id="lgrid" role="radiogroup" aria-label="בחרו צליל"></div>
 
     <div class="seclabel">אֵיפֹה הָאוֹת בַּמִּלָּה?</div>
     <div class="hint">אֶפְשָׁר לִבְחֹר כַּמָּה</div>
@@ -241,7 +231,6 @@
   catch(e){ document.querySelector('.app').innerHTML =
     '<p style="text-align:center;font-size:18px;margin-top:60px">אופס, לא הצלחנו לטעון את המילים 😕</p>'; return; }
 
-  var LETTERS = 'אבגדהוזחטיכלמנסעפצקרשת'.split('');
   var FOLD = {'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'};
   var POS = ['FIRST','MIDDLE','LAST'];
   var POS_SHORT = {FIRST:'תְּחִלָּה', MIDDLE:'אֶמְצַע', LAST:'סוֹף'};
@@ -250,6 +239,28 @@
   var TINTS = ['#CDEBFB','#FFD8DC','#FFE6C7','#CFF2E1','#E6DCF7','#FFEDB0','#D7EFE0','#FBDCEF'];
   var GN = {ms:'m-sg', fs:'f-sg', mp:'m-pl', fp:'f-pl'};
   var GN_KEY = {'m-sg':'ms','f-sg':'fs','m-pl':'mp','f-pl':'fp'};
+
+  // 20 phonemes (sound tiles) + the letters that feed each
+  var PHON = ['GLOTTAL','B','V','G','D','H','Z','X','T','Y','K','L','M','N','S','P','F','TS','R','SH'];
+  var SOURCES = {GLOTTAL:'א/ע',B:'בּ',V:'ב/ו',G:'ג',D:'ד',H:'ה',Z:'ז',X:'ח/כ',T:'ת/ט',Y:'י',
+                 K:'כּ/ק',L:'ל',M:'מ',N:'נ',S:'ס/שׂ',P:'פּ',F:'פ',TS:'צ',R:'ר',SH:'שׁ'};
+  // phoneme of one consonant occurrence (mirror of build_lexicon.py sound_of) — for highlighting
+  var DAG='ּ',SHIN='ׁ',SIN='ׂ',HIRIQ='ִ',TSERE='ֵ', NIQ=/[֑-ׇ]/, HEBC=/[א-ת]/;
+  var VOWELP={}; (function(){for(var v=0x05B0;v<0x05BC;v++)VOWELP[String.fromCharCode(v)]=1; VOWELP[String.fromCharCode(0x05C7)]=1;})();
+  var SIMPLE={'ס':'S','ת':'T','ט':'T','ק':'K','ח':'X','ג':'G','ד':'D','ז':'Z','ל':'L','מ':'M','נ':'N','צ':'TS','ר':'R','א':'GLOTTAL','ע':'GLOTTAL'};
+  function hasVowel(m){for(var i=0;i<m.length;i++)if(VOWELP[m[i]])return true;return false;}
+  function hasHolam(m){return m.indexOf('ֹ')>=0||m.indexOf('ֺ')>=0;}
+  function soundOf(base,m,isFirst,isLast,prev){
+    if(base==='ב')return m.indexOf(DAG)>=0?'B':'V';
+    if(base==='כ')return m.indexOf(DAG)>=0?'K':'X';
+    if(base==='פ')return m.indexOf(DAG)>=0?'P':'F';
+    if(base==='ש')return m.indexOf(SHIN)>=0?'SH':(m.indexOf(SIN)>=0?'S':null);
+    if(SIMPLE[base])return SIMPLE[base];
+    if(base==='ה')return (isLast&&m.indexOf(DAG)<0)?null:'H';
+    if(base==='ו'){ if(hasHolam(m))return null; if(m.indexOf(DAG)>=0)return null; if(hasVowel(m))return 'V'; return isFirst?'V':null; }
+    if(base==='י'){ if(hasVowel(m))return 'Y'; if(isFirst)return 'Y'; if(prev.indexOf(HIRIQ)>=0||prev.indexOf(TSERE)>=0)return null; return 'Y'; }
+    return null;
+  }
 
   var state = { letter:null, positions:[], n:5, sentences:[], practiced:{}, ttsOn:true };
 
@@ -262,7 +273,7 @@
 
   // ---------- feasibility matrix (per letter, single position) ----------
   var FEAS = {};
-  LETTERS.forEach(function(L){
+  PHON.forEach(function(L){
     FEAS[L]={};
     POS.forEach(function(P){
       var ps=[P], nounGN={}, nTotal=0, adjGN={}, vGN={}, vtGN={};
@@ -364,13 +375,15 @@
   }
 
   // ---------- setup UI ----------
-  var mascot=$('#mascot'), lgrid=$('#lgrid'), posRow=$('#posRow'), chips=$('#chips'),
+  var lgrid=$('#lgrid'), posRow=$('#posRow'), chips=$('#chips'),
       stepNum=$('#stepNum'), btnGen=$('#btnGenerate');
 
-  LETTERS.forEach(function(L,i){
-    var b=el('button','tile'); b.textContent=L; b.style.background=TINTS[i%TINTS.length];
-    b.setAttribute('role','radio'); b.setAttribute('aria-checked','false'); b.dataset.letter=L;
-    b.addEventListener('click',function(){ selectLetter(L); });
+  PHON.forEach(function(L,i){
+    var b=el('button','tile'); b.textContent=SOURCES[L]; b.style.background=TINTS[i%TINTS.length];
+    if(SOURCES[L].indexOf('/')>=0) b.classList.add('multi');
+    b.setAttribute('role','radio'); b.setAttribute('aria-checked','false');
+    b.setAttribute('aria-label','הצליל '+SOURCES[L]); b.dataset.phon=L;
+    b.addEventListener('click',function(){ selectPhon(L); });
     lgrid.appendChild(b);
   });
   POS.forEach(function(P){
@@ -385,21 +398,19 @@
     chips.appendChild(c);
   });
 
-  function selectLetter(L){
+  function selectPhon(L){
     state.letter=L;
-    Array.prototype.forEach.call(lgrid.children,function(t){
-      var on=t.dataset.letter===L; t.classList.toggle('sel',on); t.setAttribute('aria-checked',on?'true':'false');
+    Array.prototype.forEach.call(lgrid.children,function(tile){
+      var on=tile.dataset.phon===L; tile.classList.toggle('sel',on); tile.setAttribute('aria-checked',on?'true':'false');
     });
-    mascot.textContent=L; mascot.classList.remove('empty');
-    mascot.style.background=TINTS[LETTERS.indexOf(L)%TINTS.length];  // match the chosen tile's colour
-    // gate positions by feasibility; drop now-impossible selections
+    // gate positions by feasibility (per sound); drop now-impossible selections
     Array.prototype.forEach.call(posRow.children,function(d){
       var P=d.dataset.pos, feasible=FEAS[L][P];
       d.classList.toggle('disabled',!feasible);
       if(!feasible){ d.classList.remove('on'); d.setAttribute('aria-checked','false');
         var k=state.positions.indexOf(P); if(k>=0) state.positions.splice(k,1); }
     });
-    speak(L); refreshGen();
+    refreshGen();
   }
   function togglePos(P,d){
     if(d.classList.contains('disabled')) return;
@@ -417,17 +428,19 @@
 
   // ---------- results UI ----------
   function show(id){ $('#setup').hidden=(id!=='setup'); $('#results').hidden=(id!=='results'); }
-  var NIQQUD = /[֑-ׇ]/, HEBC = /[א-ת]/;
   function renderWord(word){
-    // group each base consonant with its trailing niqqud marks into one unit,
-    // so highlighting a letter keeps its vowel points attached
-    var chars = Array.prototype.slice.call(word), html='', i=0;
-    while(i<chars.length){
-      var ch=chars[i], unit=ch, j=i+1;
-      while(j<chars.length && NIQQUD.test(chars[j])){ unit+=chars[j]; j++; }
-      var base=FOLD[ch]||ch;
-      html += (HEBC.test(base) && base===state.letter) ? '<span class="tg">'+unit+'</span>' : unit;
-      i=j;
+    // highlight every consonant whose SOUND is the chosen phoneme
+    // (so e.g. /k/ glows both כּ and ק; /b/ glows בּ but not a soft ב)
+    var chars = Array.prototype.slice.call(word), html='', i=0, n=chars.length, prev='';
+    while(i<n){
+      var ch=chars[i], base=FOLD[ch]||ch;
+      if(!HEBC.test(base)){ html+=ch; i++; continue; }
+      var j=i+1, mk='';
+      while(j<n && NIQ.test(chars[j])){ mk+=chars[j]; j++; }
+      var unit=chars.slice(i,j).join('');
+      var snd=soundOf(base, mk, i===0, j>=n, prev);
+      html += (snd===state.letter) ? '<span class="tg">'+unit+'</span>' : unit;
+      prev=mk; i=j;
     }
     return '<bdi class="word" tabindex="0">'+html+'</bdi>';
   }
@@ -435,7 +448,7 @@
     var res = generate(state.letter, state.positions, state.n);
     state.sentences = res; state.practiced = {};
     var posTxt = state.positions.map(function(p){return POS_SHORT[p];}).join(' · ');
-    $('#resSummary').textContent = 'הָאוֹת: '+state.letter+' · '+posTxt+' · '+res.length;
+    $('#resSummary').textContent = 'הַצְּלִיל: '+SOURCES[state.letter]+' · '+posTxt+' · '+res.length;
     var cap=$('#capNote');
     if(res.length < state.n){ cap.hidden=false; cap.textContent='מָצָאנוּ '+res.length+' מִשְׁפָּטִים לַמִּקּוּם הַזֶּה — נַסּוּ עוֹד מִקּוּם לְעוֹד מִשְׁפָּטִים'; }
     else cap.hidden=true;
