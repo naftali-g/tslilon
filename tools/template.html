@@ -239,6 +239,9 @@
   var PHON = ['GLOTTAL','B','V','G','D','H','Z','X','T','Y','K','L','M','N','S','P','F','TS','R','SH'];
   var SOURCES = {GLOTTAL:'א/ע',B:'בּ',V:'ב/ו',G:'ג',D:'ד',H:'ה',Z:'ז',X:'ח/כ',T:'ט/ת',Y:'י',
                  K:'כּ/ק',L:'ל',M:'מ',N:'נ',S:'ס/שׂ',P:'פּ',F:'פ',TS:'צ',R:'ר',SH:'שׁ'};
+  // spoken sound per tile — the consonant as a short syllable (homophone pairs share one sound)
+  var SOUNDS = {GLOTTAL:'אַ',B:'בַּ',V:'וַ',G:'גַ',D:'דַ',H:'הַ',Z:'זַ',X:'חַ',T:'טַ',Y:'יַ',
+                K:'כַּ',L:'לַ',M:'מַ',N:'נַ',S:'סַ',P:'פַּ',F:'פַ',TS:'צַ',R:'רַ',SH:'שַׁ'};
   // phoneme of one consonant occurrence (mirror of build_lexicon.py sound_of) — for highlighting
   var DAG='ּ',SHIN='ׁ',SIN='ׂ',HIRIQ='ִ',TSERE='ֵ', NIQ=/[֑-ׇ]/, HEBC=/[א-ת]/;
   var VOWELP={}; (function(){for(var v=0x05B0;v<0x05BC;v++)VOWELP[String.fromCharCode(v)]=1; VOWELP[String.fromCharCode(0x05C7)]=1;})();
@@ -329,7 +332,7 @@
   }
 
   // ---------- TTS (Web Speech API — uses the OS's installed voices) ----------
-  var ttsAvailable = ('speechSynthesis' in window), heVoice=null, ttsConfirmed=false, hintShown=false;
+  var ttsAvailable = ('speechSynthesis' in window), heVoice=null, ttsConfirmed=false, ttsProvenBad=false, hintShown=false;
   var isMac = /Mac/i.test((navigator.platform||'') + (navigator.userAgent||''));
   var HE_VOICE_HELP = isMac
     ? 'בְּמֶק: הַגְדָּרוֹת הַמַּעֲרֶכֶת ‹ נְגִישׁוּת ‹ תֹּכֶן מְדֻבָּר ‹ קוֹל מַעֲרֶכֶת ‹ נִיהוּל קוֹלוֹת… ‹ עִבְרִית (כַּרְמִית), וְאָז לְהַפְעִיל מֵחָדָשׁ אֶת הַדַּפְדְּפָן.'
@@ -337,26 +340,37 @@
   function loadVoices(){ if(!ttsAvailable) return;
     var vs=window.speechSynthesis.getVoices()||[];
     heVoice = vs.filter(function(v){return v.lang==='he-IL'||v.lang.toLowerCase().indexOf('he')===0;})[0]||null;
-    updateTtsStatus();
+    updateTtsStatus();  // a missing enumerated he voice is NOT a failure — Android speaks he-IL without listing one
   }
   if(ttsAvailable){ loadVoices(); window.speechSynthesis.onvoiceschanged=loadVoices; }
-  function speak(text){
-    if(!ttsAvailable){ showTtsHint(); return; }
+  function ttsWorks(){ ttsConfirmed=true; ttsProvenBad=false; var t=$('#toast'); if(t) t.hidden=true; updateTtsStatus(); }
+  function markTtsBad(){ if(ttsConfirmed) return; ttsProvenBad=true; updateTtsStatus(); showTtsHint(); }
+  function speak(text, detect){
+    if(!ttsAvailable){ if(detect!==false) showTtsHint(); return; }
     if(!state.ttsOn) return;
     try{
-      window.speechSynthesis.cancel();
+      var ss=window.speechSynthesis;
+      ss.cancel();
       var u=new SpeechSynthesisUtterance(text);
       u.lang='he-IL'; if(heVoice) u.voice=heVoice; u.rate=.9;
-      u.onstart=function(){ ttsConfirmed=true; };
-      u.onerror=function(){ showTtsHint(); };
-      window.speechSynthesis.speak(u);
-      // if nothing ever starts and there's no Hebrew voice, say so instead of going silent
-      setTimeout(function(){ if(!ttsConfirmed && !heVoice) showTtsHint(); }, 700);
-    }catch(e){ showTtsHint(); }
+      u.onstart=ttsWorks; u.onboundary=ttsWorks; u.onend=ttsWorks;
+      u.onerror=function(ev){ if(ev && (ev.error==='interrupted'||ev.error==='canceled')) return; if(detect!==false) markTtsBad(); };
+      ss.speak(u);
+      // Android Chrome often never fires onstart and lists no he voice, yet speaks fine — so prove
+      // playback via ss.speaking/pending, and only warn for detect calls (the longer "listen" utterances).
+      if(detect!==false){
+        clearTimeout(speak._t);
+        speak._t=setTimeout(function(){
+          if(ttsConfirmed) return;
+          if(ss.speaking || ss.pending){ ttsConfirmed=true; return; }
+          markTtsBad();
+        }, 1400);
+      }
+    }catch(e){ if(detect!==false) markTtsBad(); }
   }
   function showTtsHint(){
     if(hintShown) return; hintShown=true;
-    var t=$('#toast');
+    var t=$('#toast'); if(!t) return;
     t.innerHTML='🔇 לֹא נִמְצָא קוֹל בְּעִבְרִית בַּמַּכְשִׁיר — אֶפְשָׁר עֲדַיִן לִקְרֹא וּלְתַרְגֵּל בְּקוֹל! <button class="link" id="howto">אֵיךְ מַפְעִילִים קוֹל עִבְרִי?</button>';
     t.hidden=false;
     var h=$('#howto'); if(h) h.addEventListener('click',function(){ alert(HE_VOICE_HELP); });
@@ -365,7 +379,7 @@
   function updateTtsStatus(){
     var miss=$('#ttsMissing'); if(!miss) return; var span=miss.querySelector('span');
     if(!ttsAvailable){ miss.hidden=false; span.textContent='הַדַּפְדְּפָן לֹא תּוֹמֵךְ בְּהַקְרָאָה'; }
-    else if(!heVoice){ miss.hidden=false; span.textContent='לֹא נִמְצָא קוֹל בְּעִבְרִית בַּמַּכְשִׁיר הַזֶּה'; }
+    else if(ttsProvenBad && !ttsConfirmed){ miss.hidden=false; span.textContent='לֹא נִמְצָא קוֹל בְּעִבְרִית בַּמַּכְשִׁיר הַזֶּה'; }
     else { miss.hidden=true; }
   }
 
@@ -400,6 +414,7 @@
       if(!feasible){ d.classList.remove('on'); d.setAttribute('aria-checked','false');
         var k=state.positions.indexOf(P); if(k>=0) state.positions.splice(k,1); }
     });
+    speak(SOUNDS[L]||SOURCES[L], false);   // say the chosen sound (skips the no-voice probe — short utterance)
     refreshGen();
   }
   function togglePos(P,d){
