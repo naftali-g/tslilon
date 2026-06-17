@@ -491,7 +491,7 @@
     return '<svg viewBox="0 0 380 240" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">'+svg+'</svg>';
   }
   function celebrate(){
-    $('#winText').innerHTML='תִּרְגַּלְתֶּם אֶת כָּל '+state.sentences.length+' הַמִּשְׁפָּטִים עִם הָאוֹת <b>'+state.letter+'</b>';
+    $('#winText').innerHTML='תִּרְגַּלְתֶּם אֶת כָּל '+state.sentences.length+' הַמִּשְׁפָּטִים עִם הָאוֹת <b>'+SOURCES[state.letter]+'</b>';
     $('#fireworks').innerHTML=fireworksSVG();
     $('#celebrate').hidden=false;
   }
