@@ -32,8 +32,11 @@
   }
   .app{max-width:520px; margin:0 auto; padding:8px 14px 24px; position:relative}
 
-  .topbar{position:relative; display:flex; align-items:flex-start; justify-content:center; min-height:36px; margin-bottom:0}
-  .logo-img{max-width:min(114px,40%); height:auto; display:block}
+  /* setup fills the viewport so the generate button lands at the bottom; the logo fills the slack (min/max bounded).
+     logo is absolutely positioned so it takes the REAL leftover height (no flex %-height circular sizing) and never overflows */
+  #setup{display:flex; flex-direction:column; min-height:calc(100vh - 32px); min-height:calc(100svh - 32px)}
+  .topbar{position:relative; flex:1 1 0; min-height:90px; margin-bottom:0}
+  .logo-img{position:absolute; inset:0; margin:auto; max-height:min(100%,320px); max-width:92%; width:auto; height:auto; display:block}
   .app-gear{position:absolute; top:8px; inset-inline-start:8px; z-index:5}
   .icon-btn{width:42px;height:42px;border:1px solid var(--line);background:#fff;border-radius:50%;
     font-size:20px;display:grid;place-items:center;cursor:pointer;box-shadow:var(--shadow-sm)}

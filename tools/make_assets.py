@@ -30,7 +30,7 @@ crop = A[y0:y1, x0:x1].astype(np.float32)
 alpha = np.clip((np.abs(crop - cream).max(2) - 6) / 26, 0, 1) * 255
 rgba = np.dstack([np.clip(crop, 0, 255), alpha]).astype(np.uint8)
 header = Image.fromarray(rgba, "RGBA")
-header.thumbnail((560, 560), Image.LANCZOS)
+header.thumbnail((1000, 1000), Image.LANCZOS)  # logo now renders large on tall phones — keep it crisp
 header.save(os.path.join(ROOT, "logo.webp"), "WEBP", quality=86, method=6)
 
 # ---- favicon: largest component (the alef mascot), centered on a cream square ----
