@@ -239,9 +239,9 @@
   var PHON = ['GLOTTAL','B','V','G','D','H','Z','X','T','Y','K','L','M','N','S','P','F','TS','R','SH'];
   var SOURCES = {GLOTTAL:'א/ע',B:'בּ',V:'ב/ו',G:'ג',D:'ד',H:'ה',Z:'ז',X:'ח/כ',T:'ט/ת',Y:'י',
                  K:'כּ/ק',L:'ל',M:'מ',N:'נ',S:'ס/שׂ',P:'פּ',F:'פ',TS:'צ',R:'ר',SH:'שׁ'};
-  // spoken sound per tile — the consonant as a short syllable (homophone pairs share one sound)
-  var SOUNDS = {GLOTTAL:'אַ',B:'בַּ',V:'וַ',G:'גַ',D:'דַ',H:'הַ',Z:'זַ',X:'חַ',T:'טַ',Y:'יַ',
-                K:'כַּ',L:'לַ',M:'מַ',N:'נַ',S:'סַ',P:'פַּ',F:'פַ',TS:'צַ',R:'רַ',SH:'שַׁ'};
+  // spoken sound per tile — the consonant voiced with a shva (homophone pairs share one sound)
+  var SOUNDS = {GLOTTAL:'אְ',B:'בְּ',V:'וְ',G:'גְ',D:'דְ',H:'הְ',Z:'זְ',X:'חְ',T:'טְ',Y:'יְ',
+                K:'כְּ',L:'לְ',M:'מְ',N:'נְ',S:'סְ',P:'פְּ',F:'פְ',TS:'צְ',R:'רְ',SH:'שְׁ'};
   // phoneme of one consonant occurrence (mirror of build_lexicon.py sound_of) — for highlighting
   var DAG='ּ',SHIN='ׁ',SIN='ׂ',HIRIQ='ִ',TSERE='ֵ', NIQ=/[֑-ׇ]/, HEBC=/[א-ת]/;
   var VOWELP={}; (function(){for(var v=0x05B0;v<0x05BC;v++)VOWELP[String.fromCharCode(v)]=1; VOWELP[String.fromCharCode(0x05C7)]=1;})();
