@@ -30,20 +30,20 @@
       var(--cream);
     -webkit-font-smoothing:antialiased; min-height:100vh;
   }
-  .app{max-width:520px; margin:0 auto; padding:14px 16px 40px}
+  .app{max-width:520px; margin:0 auto; padding:8px 14px 24px; position:relative}
 
-  .topbar{position:relative; display:flex; align-items:flex-start; justify-content:center; min-height:44px; margin-bottom:2px}
-  .logo-img{max-width:min(240px,70%); height:auto; display:block}
-  .topbar .icon-btn{position:absolute; inset-inline-start:0; top:0}
+  .topbar{position:relative; display:flex; align-items:flex-start; justify-content:center; min-height:36px; margin-bottom:0}
+  .logo-img{max-width:min(114px,40%); height:auto; display:block}
+  .app-gear{position:absolute; top:8px; inset-inline-start:8px; z-index:5}
   .icon-btn{width:42px;height:42px;border:1px solid var(--line);background:#fff;border-radius:50%;
     font-size:20px;display:grid;place-items:center;cursor:pointer;box-shadow:var(--shadow-sm)}
   .icon-btn:active{transform:scale(.94)}
 
-  .seclabel{font-family:var(--f-round);font-weight:700;text-align:center;font-size:19px;margin:18px 0 2px}
-  .hint{text-align:center;font-size:12.5px;color:var(--slate);margin:0 0 10px}
+  .seclabel{font-family:var(--f-round);font-weight:700;text-align:center;font-size:18px;margin:6px 0 1px}
+  .hint{text-align:center;font-size:11.5px;color:var(--slate);margin:0 0 5px}
 
-  .lgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:6px}
-  .tile{aspect-ratio:1;border:none;border-radius:14px;font-family:var(--f-round);font-weight:700;
+  .lgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:4px}
+  .tile{aspect-ratio:1.25;border:none;border-radius:14px;font-family:var(--f-round);font-weight:700;
     font-size:clamp(20px,6vw,26px);color:var(--ink);cursor:pointer;position:relative;
     box-shadow:var(--shadow-sm);transition:transform .12s}
   .tile.multi{font-size:clamp(14px,4vw,18px);letter-spacing:-.5px}
@@ -53,37 +53,34 @@
     color:#fff;width:20px;height:20px;border-radius:50%;font-size:12px;display:grid;place-items:center;border:2px solid #fff}
   .tile:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 
-  .pos-row{display:flex;gap:10px;margin-top:6px}
-  .pos{flex:1;background:#fff;border:2px solid var(--tile);border-radius:16px;padding:11px 4px;text-align:center;
+  .pos-row{display:flex;gap:10px;margin-top:4px}
+  .pos{flex:1;background:#fff;border:2px solid var(--tile);border-radius:16px;padding:8px 4px;text-align:center;
     font-family:var(--f-round);font-weight:700;font-size:14px;cursor:pointer;transition:transform .12s}
   .pos:active{transform:scale(.95)}
-  .pos .dots{font-size:13px;letter-spacing:3px;color:var(--slate);margin-bottom:3px}
+  .pos .dots{font-size:13px;letter-spacing:3px;color:var(--slate);margin-bottom:1px}
   .pos.on{background:var(--mango);border-color:var(--mango);color:#fff}
   .pos.on .dots{color:#fff}
   .pos.disabled{opacity:.38;cursor:not-allowed;background:#F3F1EB}
   .pos:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 
-  .stepper{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:6px}
-  .stepbtn{width:52px;height:52px;border-radius:50%;background:#fff;border:1px solid var(--line);
-    font-size:28px;font-weight:800;cursor:pointer;box-shadow:var(--shadow-sm);color:var(--ink)}
+  .stepper{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:4px}
+  .stepbtn{width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid var(--line);
+    font-size:24px;font-weight:800;cursor:pointer;box-shadow:var(--shadow-sm);color:var(--ink)}
   .stepbtn:active{transform:scale(.92)}
-  .stepnum{font-family:var(--f-display);font-size:46px;font-weight:700;min-width:60px;text-align:center}
-  .chips{display:flex;gap:8px;justify-content:center;margin-top:10px}
-  .chip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 16px;font-weight:700;
-    cursor:pointer;font-family:var(--f-round)}
-  .chip.on{background:var(--yellow);border-color:var(--yellow)}
+  .stepnum{font-family:var(--f-display);font-size:38px;font-weight:700;min-width:56px;text-align:center}
 
-  .cta{display:block;width:100%;margin-top:20px;color:#fff;font-family:var(--f-round);font-weight:700;
-    font-size:21px;padding:17px;border:none;border-radius:20px;cursor:pointer;
+  .cta{display:block;width:100%;margin-top:12px;color:#fff;font-family:var(--f-round);font-weight:700;
+    font-size:19px;padding:13px;border:none;border-radius:18px;cursor:pointer;
     background:linear-gradient(90deg,var(--coral),var(--mango));box-shadow:0 12px 22px rgba(255,122,133,.42)}
   .cta:active{transform:scale(.98)}
   .cta.ghost{background:#EDE7DC;color:#9a917f;box-shadow:none}
   .cta:disabled{background:#E7E2D8;color:#B3AB9B;box-shadow:none;cursor:not-allowed}
   .cta.mint{background:linear-gradient(90deg,var(--mint),var(--blue));box-shadow:0 12px 22px rgba(102,217,168,.4)}
+  .cta.grape{background:linear-gradient(90deg,#B39DDB,#8E6FD0);box-shadow:0 12px 22px rgba(142,111,208,.42)}
 
   /* results */
   .hchip{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid var(--line);
-    border-radius:16px;padding:11px 14px;font-family:var(--f-round);font-weight:700;font-size:15px;box-shadow:var(--shadow-sm)}
+    border-radius:16px;padding:11px 14px;margin-inline-start:42px;font-family:var(--f-round);font-weight:700;font-size:15px;box-shadow:var(--shadow-sm)}
   .editbtn{border:none;background:none;font-size:18px;cursor:pointer;color:var(--slate)}
   .progress{display:flex;align-items:center;gap:10px;justify-content:center;font-size:13px;color:var(--slate);margin:12px 0 4px}
   .pbar{flex:1;height:9px;border-radius:99px;background:#EBE4D6;overflow:hidden;max-width:200px}
@@ -150,15 +147,14 @@
 </head>
 <body>
 <div class="app">
+  <button class="icon-btn app-gear" id="btnSettings" aria-label="הגדרות">⚙</button>
 
   <!-- ===== SETUP ===== -->
   <section id="setup">
     <div class="topbar">
-      <button class="icon-btn" id="btnSettings" aria-label="הגדרות">⚙</button>
       <img class="logo-img" src="logo.webp" alt="אותיות מדברות">
     </div>
     <div class="seclabel">בַּחֲרוּ צְלִיל</div>
-    <div class="hint">אוֹתִיּוֹת עִם אוֹתוֹ צְלִיל מְקֻבָּצוֹת יַחַד</div>
     <div class="lgrid" id="lgrid" role="radiogroup" aria-label="בחרו צליל"></div>
 
     <div class="seclabel">אֵיפֹה הָאוֹת בַּמִּלָּה?</div>
@@ -171,7 +167,6 @@
       <div class="stepnum" id="stepNum">5</div>
       <button class="stepbtn" id="stepPlus" aria-label="עוד">+</button>
     </div>
-    <div class="chips" id="chips"></div>
 
     <button class="cta" id="btnGenerate" disabled>צְרוּ מִשְׁפָּטִים ✨</button>
   </section>
@@ -190,7 +185,7 @@
     <div id="sentences" aria-live="polite"></div>
     <div class="actionbar">
       <button class="cta mint" id="btnShuffle">עוֹד מִשְׁפָּטִים</button>
-      <button class="cta ghost" id="btnBack">אוֹת חֲדָשָׁה</button>
+      <button class="cta grape" id="btnBack">אוֹת חֲדָשָׁה</button>
     </div>
     <div class="note">›שִׁמְעוּ‹ לִשְׁמֹעַ אֶת הַמִּשְׁפָּט · ›אָמַרְתִּי‹ אַחֲרֵי שֶׁאֲמַרְתֶּם בְּקוֹל · אֶפְשָׁר גַּם לְהַקִּישׁ עַל מִלָּה</div>
   </section>
@@ -204,7 +199,7 @@
     <div class="win-title">כָּל הַכָּבוֹד!</div>
     <div id="winText"></div>
     <button class="cta mint" id="btnMore">עוֹד מִשְׁפָּטִים</button>
-    <button class="cta ghost" id="btnNewLetter">אוֹת חֲדָשָׁה</button>
+    <button class="cta grape" id="btnNewLetter">אוֹת חֲדָשָׁה</button>
   </div>
 </div>
 
@@ -214,7 +209,7 @@
     <div class="win-title" style="font-size:22px">הַגְדָּרוֹת</div>
     <div class="settings-row"><span>הַקְרָאָה (קוֹל)</span><button class="switch on" id="swTts" role="switch" aria-checked="true"></button></div>
     <div class="settings-row" id="ttsMissing" hidden><span style="font-size:13px;color:var(--slate);font-weight:400">לֹא נִמְצָא קוֹל בְּעִבְרִית בַּמַּכְשִׁיר הַזֶּה</span></div>
-    <button class="cta ghost" id="btnCloseSettings" style="margin-top:16px">סְגִירָה</button>
+    <button class="cta mint" id="btnCloseSettings" style="margin-top:16px">סְגִירָה</button>
   </div>
 </div>
 
@@ -242,7 +237,7 @@
 
   // 20 phonemes (sound tiles) + the letters that feed each
   var PHON = ['GLOTTAL','B','V','G','D','H','Z','X','T','Y','K','L','M','N','S','P','F','TS','R','SH'];
-  var SOURCES = {GLOTTAL:'א/ע',B:'בּ',V:'ב/ו',G:'ג',D:'ד',H:'ה',Z:'ז',X:'ח/כ',T:'ת/ט',Y:'י',
+  var SOURCES = {GLOTTAL:'א/ע',B:'בּ',V:'ב/ו',G:'ג',D:'ד',H:'ה',Z:'ז',X:'ח/כ',T:'ט/ת',Y:'י',
                  K:'כּ/ק',L:'ל',M:'מ',N:'נ',S:'ס/שׂ',P:'פּ',F:'פ',TS:'צ',R:'ר',SH:'שׁ'};
   // phoneme of one consonant occurrence (mirror of build_lexicon.py sound_of) — for highlighting
   var DAG='ּ',SHIN='ׁ',SIN='ׂ',HIRIQ='ִ',TSERE='ֵ', NIQ=/[֑-ׇ]/, HEBC=/[א-ת]/;
@@ -375,7 +370,7 @@
   }
 
   // ---------- setup UI ----------
-  var lgrid=$('#lgrid'), posRow=$('#posRow'), chips=$('#chips'),
+  var lgrid=$('#lgrid'), posRow=$('#posRow'),
       stepNum=$('#stepNum'), btnGen=$('#btnGenerate');
 
   PHON.forEach(function(L,i){
@@ -391,11 +386,6 @@
     d.innerHTML='<div class="dots">'+POS_DOTS[P]+'</div>'+POS_SHORT[P];
     d.addEventListener('click',function(){ togglePos(P,d); });
     posRow.appendChild(d);
-  });
-  [1,3,5,10].forEach(function(v){
-    var c=el('button','chip'); c.textContent=v; c.dataset.v=v;
-    c.addEventListener('click',function(){ setN(v); });
-    chips.appendChild(c);
   });
 
   function selectPhon(L){
@@ -419,12 +409,11 @@
     else { state.positions.push(P); d.classList.add('on'); d.setAttribute('aria-checked','true'); }
     refreshGen();
   }
-  function setN(v){ state.n=v; stepNum.textContent=v;
-    Array.prototype.forEach.call(chips.children,function(c){ c.classList.toggle('on',+c.dataset.v===v); }); }
+  function setN(v){ state.n=v; stepNum.textContent=v; try{ localStorage.setItem('talkingletters.n', v); }catch(e){} }
   $('#stepMinus').addEventListener('click',function(){ setN(Math.max(1,state.n-1)); });
   $('#stepPlus').addEventListener('click',function(){ setN(Math.min(10,state.n+1)); });
   function refreshGen(){ btnGen.disabled = !(state.letter && state.positions.length); }
-  setN(5);
+  setN((function(){ try{ var v=parseInt(localStorage.getItem('talkingletters.n'),10); return (v>=1&&v<=10)?v:5; }catch(e){ return 5; } })());  // remember last chosen count
 
   // ---------- results UI ----------
   function show(id){ $('#setup').hidden=(id!=='setup'); $('#results').hidden=(id!=='results'); }
@@ -460,7 +449,7 @@
       var ctrl=el('div','ribbon-ctrl');
       var listen=el('button','rbtn listen'); listen.textContent='🔊 שִׁמְעוּ'; listen.setAttribute('aria-label','השמעת המשפט');
       var said=el('button','rbtn said'); said.textContent='✓ אָמַרְתִּי'; said.setAttribute('aria-label','סימון שתרגלנו');
-      if(!ttsAvailable){ listen.style.display='none'; }   // no Hebrew voice -> said takes full width
+      if(!ttsAvailable || !state.ttsOn){ listen.style.display='none'; }   // no voice / voice off -> "אמרתי" takes full width
       ctrl.appendChild(listen); ctrl.appendChild(said);   // RTL: שמעו on the right, אמרתי on the left
       r.appendChild(sent); r.appendChild(ctrl);
 
@@ -513,15 +502,22 @@
   $('#btnBack').addEventListener('click',function(){ show('setup'); });
   $('#btnMore').addEventListener('click',function(){ $('#celebrate').hidden=true; doGenerate(); });
   $('#btnNewLetter').addEventListener('click',function(){ $('#celebrate').hidden=true; show('setup'); });
+  $('#celebrate').addEventListener('click',function(e){ if(e.target===this) this.hidden=true; });  // tap backdrop to dismiss
 
   // ---------- settings ----------
   $('#btnSettings').addEventListener('click',function(){ $('#settingsSheet').hidden=false; });
   $('#btnCloseSettings').addEventListener('click',function(){ $('#settingsSheet').hidden=true; });
+  $('#settingsSheet').addEventListener('click',function(e){ if(e.target===this) this.hidden=true; });  // tap backdrop to close
   var swTts=$('#swTts');
-  if(!ttsAvailable){ swTts.classList.remove('on'); swTts.setAttribute('aria-checked','false'); state.ttsOn=false; swTts.disabled=true; }
+  try{ var savedTts=localStorage.getItem('talkingletters.tts'); if(savedTts!==null) state.ttsOn=(savedTts==='1'); }catch(e){}  // remember voice on/off
+  if(!ttsAvailable){ state.ttsOn=false; swTts.disabled=true; }
+  swTts.classList.toggle('on',state.ttsOn); swTts.setAttribute('aria-checked',state.ttsOn?'true':'false');
   updateTtsStatus();
   swTts.addEventListener('click',function(){ if(!ttsAvailable)return; state.ttsOn=!state.ttsOn;
-    swTts.classList.toggle('on',state.ttsOn); swTts.setAttribute('aria-checked',state.ttsOn?'true':'false'); });
+    swTts.classList.toggle('on',state.ttsOn); swTts.setAttribute('aria-checked',state.ttsOn?'true':'false');
+    try{ localStorage.setItem('talkingletters.tts', state.ttsOn?'1':'0'); }catch(e){}
+    Array.prototype.forEach.call(document.querySelectorAll('.rbtn.listen'),function(b){ b.style.display=state.ttsOn?'':'none'; });  // sync sentences already on screen
+  });
 
 })();
 </script>
