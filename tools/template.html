@@ -57,20 +57,22 @@
 
   .pos-row{display:flex;gap:10px;margin-top:4px}
   /* tinted + raised so the pills read as required, tappable inputs (not passive labels next to the stepper) */
-  .pos{flex:1;background:#FFF1DF;border:2px solid #FFD9A8;border-radius:16px;padding:8px 4px;text-align:center;
+  .pos{flex:1;background:var(--lt,#FFF1DF);border:2px solid var(--lt,#FFD9A8);border-radius:16px;padding:8px 4px;text-align:center;
     font-family:var(--f-round);font-weight:700;font-size:14px;color:var(--ink);cursor:pointer;
-    box-shadow:var(--shadow-sm);transition:transform .12s}
+    box-shadow:var(--shadow-sm);transition:transform .12s,background .15s,border-color .15s}
   .pos:active{transform:scale(.95)}
   /* concrete preview: a tiny word from mini letter-tiles; FIRST is rightmost (RTL), active slot = mango */
   .pos .dots,.wt{display:flex;justify-content:center;gap:3px}
   .pos .dots{margin-bottom:5px}
   .pos .dots b,.wt b{width:18px;height:18px;border-radius:5px;display:grid;place-items:center;font-family:var(--f-round);
     font-weight:700;font-size:11px;background:#fff;border:1.5px solid #E2DBCB;color:#fff}
-  .pos .dots b.on,.wt b.on{background:var(--mango);border-color:var(--mango)}
-  .pos.on{background:var(--mango);border-color:var(--mango);color:#fff}
-  .pos.on .dots b{border-color:rgba(255,255,255,.75);background:rgba(255,255,255,.18)}
-  .pos.on .dots b.on{background:#fff;border-color:#fff;color:var(--mango)}   /* mango-on-mango would vanish: invert on the selected pill */
-  .pos.disabled{opacity:.38;cursor:not-allowed;background:#F3F1EB}
+  .wt b.on{background:var(--mango);border-color:var(--mango)}
+  /* picker: whole pill = the chosen letter's tint (--lt); selecting deepens it to a darker shade (--ltd) */
+  .pos .dots b.on{background:var(--ltd,var(--mango));border-color:var(--ltd,var(--mango))}
+  .pos.on{background:var(--ltd,var(--mango));border-color:var(--ltd,var(--mango));color:#fff}
+  .pos.on .dots b{border-color:rgba(255,255,255,.7);background:rgba(255,255,255,.22)}
+  .pos.on .dots b.on{background:#fff;border-color:#fff;color:var(--ltd,var(--mango))}   /* filled slot inverts to white on the chosen pill */
+  .pos.disabled{opacity:.38;cursor:not-allowed;background:#F3F1EB;border-color:#E6E0D2}
   .pos:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 
   /* attention cues for the setup steps. the box-shadow ring survives prefers-reduced-motion (no transition),
@@ -524,8 +526,12 @@
 
   // position preview: the target slot shows the actual chosen letter (red, like the in-sentence highlight),
   // the other two show ○. before a sound is picked, glyph is omitted and a neutral ● placeholder is shown.
+  // darken a pastel hex toward the same hue → the "chosen" pill + its filled square
+  function darken(hex,f){ f=(f==null?0.55:f); var n=parseInt(hex.slice(1),16);
+    var r=Math.round(((n>>16)&255)*f), g=Math.round(((n>>8)&255)*f), b=Math.round((n&255)*f);
+    return '#'+(1<<24|r<<16|g<<8|b).toString(16).slice(1); }
   function posPreview(P, glyph){
-    // word-tiles: the active slot is a mango mini-tile holding the chosen letter (empty before a sound is picked)
+    // word-tiles: active slot holds the chosen letter; pill + square colors come from CSS vars --lt/--ltd (set per chosen letter)
     var on={FIRST:0,MIDDLE:1,LAST:2}[P], s='';
     for(var i=0;i<3;i++) s += (i===on) ? '<b class="on">'+(glyph||'')+'</b>' : '<b></b>';
     return s;
@@ -555,6 +561,7 @@
   function selectPhon(L){
     state.letter=L;
     var glyph=(SOURCES[L]||'').split('/')[0];   // representative glyph for the position preview (keeps dagesh/dot)
+    var tint=TINTS[((PHON.indexOf(L)+TINTS.length)%TINTS.length)], dark=darken(tint);   // chosen letter's tint + a darker shade for the "chosen" pill
     each(lgrid.children,function(tile){
       var on=tile.dataset.phon===L; tile.classList.toggle('sel',on); tile.setAttribute('aria-checked',on?'true':'false');
     });
@@ -563,6 +570,7 @@
       var P=d.dataset.pos, feasible=FEAS[L][P];
       d.classList.toggle('disabled',!feasible);
       d.tabIndex = feasible ? 0 : -1;                  // infeasible pills drop out of the tab order
+      d.style.setProperty('--lt',tint); d.style.setProperty('--ltd',dark);   // pill = letter tint; chosen state = darker shade
       d.querySelector('.dots').innerHTML=posPreview(P,glyph);
       if(!feasible){ d.classList.remove('on'); d.setAttribute('aria-checked','false');
         var k=state.positions.indexOf(P); if(k>=0) state.positions.splice(k,1); }
@@ -670,10 +678,13 @@
     $('#winText').innerHTML='תִּרְגַּלְ'+verbEnd()+' אֶת כָּל '+state.sentences.length+' הַמִּשְׁפָּטִים עִם הָאוֹת <b>'+SOURCES[state.letter]+'</b>';
     if(tracking()){                            // week strip + milestone are tracking artifacts — skip them when not tracking
       $('#winWeekRow').hidden=false; renderWeek($('#winWeek'));
-      var days=Object.keys(stats.days).length, ms=$('#winMilestone');
-      ms.innerHTML = (days<=1) ? ('הַתִּרְגּוּל הָרִאשׁוֹן '+possYour()+'! 🌟')
-                               : ('זֶה הַיּוֹם הַ־'+days+' '+possYour()+'! 🌟');
-      ms.hidden=false;
+      // milestone fires only on real "firsts": the very first completed practice EVER, or the first on a NEW day.
+      // stats.days is keyed per-day, so day-count alone can't tell "first ever" from "Nth session today" — track the last celebrated day.
+      var today=todayKey(), days=Object.keys(stats.days).length, ms=$('#winMilestone'), last=stats.lastCelebratedDay;
+      if(!last){ ms.innerHTML='הַתִּרְגּוּל הָרִאשׁוֹן '+possYour()+'! 🌟'; ms.hidden=false; }
+      else if(last!==today){ ms.innerHTML='זֶה הַיּוֹם הַ־'+days+' '+possYour()+'! 🌟'; ms.hidden=false; }
+      else { ms.hidden=true; }                 // repeat session the same day → no milestone
+      if(last!==today){ stats.lastCelebratedDay=today; saveStats(); }
     } else { $('#winWeekRow').hidden=true; $('#winMilestone').hidden=true; }
     $('#fireworks').innerHTML=fireworksSVG();
     $('#celebrate').hidden=false;
@@ -778,13 +789,13 @@
       var sd=stats.sounds[L], full=SOURCES[L]||L, g1=full.split('/')[0], idx=PHON.indexOf(L);
       var row=el('div','sndrow');
       var tile=el('div','stile'+(full.indexOf('/')>=0?' multi':'')); tile.textContent=full;
-      tile.style.background=TINTS[(idx<0?0:idx)%TINTS.length];                 // same tint the letter has in the picker
+      var tint=TINTS[(idx<0?0:idx)%TINTS.length]; tile.style.background=tint;   // same tint the letter has in the picker
       var meta=el('div','meta');
       var ct=el('div','ct'); ct.textContent=sd.s+' מִשְׁפָּטִים'; meta.appendChild(ct);
       var sub=el('div','sub'); sub.textContent=Object.keys(sd.d||{}).length+' יָמִים שֶׁל תִּרְגּוּל'; meta.appendChild(sub);
       var wt=el('div','wt');                                                   // word-tiles: which positions were practiced
       ['FIRST','MIDDLE','LAST'].forEach(function(P){ var b=document.createElement('b');
-        if(sd.p&&sd.p[P]){ b.className='on'; b.textContent=g1; } wt.appendChild(b); });
+        if(sd.p&&sd.p[P]){ b.className='on'; b.textContent=g1; b.style.background=tint; b.style.borderColor='#E2DBCB'; b.style.color='#2B2B36'; } wt.appendChild(b); });
       row.appendChild(tile); row.appendChild(meta); row.appendChild(wt); box.appendChild(row);
     });
   }
