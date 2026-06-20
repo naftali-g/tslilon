@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>אותיות מדברות</title>
+<title>צלילון</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -250,7 +250,7 @@
       </button>
     </div>
     <div class="topbar">
-      <img class="logo-img" src="logo.webp" alt="אותיות מדברות">
+      <img class="logo-img" src="logo.webp" alt="צלילון — משמיעים צלילים">
     </div>
     <div class="seclabel">בַּחֲרוּ צְלִיל</div>
     <div class="lgrid" id="lgrid" role="radiogroup" aria-label="בחרו צליל"></div>
@@ -296,7 +296,7 @@
 <div class="overlay" id="celebrate" hidden>
   <div class="sheet" style="max-height:92vh;overflow-y:auto">
     <div class="fireworks" id="fireworks"></div>
-    <img class="win-mascot-img" src="mascot.webp" alt="">
+    <img id="winMascot" class="win-mascot-img" data-src="mascot_anim.webp" alt="">
     <div class="win-title" id="winTitle">כָּל הַכָּבוֹד!</div>
     <div id="winText"></div>
     <div class="win-week" id="winWeekRow"><span class="wkdots" id="winWeek"></span></div>
@@ -687,6 +687,7 @@
       if(last!==today){ stats.lastCelebratedDay=today; saveStats(); }
     } else { $('#winWeekRow').hidden=true; $('#winMilestone').hidden=true; }
     $('#fireworks').innerHTML=fireworksSVG();
+    var wm=$('#winMascot'); if(!wm.getAttribute('src')) wm.setAttribute('src',wm.getAttribute('data-src'));  // point the <img> at the (idle-prewarmed) animation when the win screen first shows
     $('#celebrate').hidden=false;
   }
 
@@ -834,6 +835,10 @@
 
   renderGlance();
   (function(){ var done; try{ done=localStorage.getItem(ONBOARDED); }catch(e){} if(!done) openOnboarding(false); })();  // first launch only
+
+  // warm the celebration mascot into cache once the page is idle: off the initial load, but ready before the first win
+  (function(){ var warm=function(){ var u=$('#winMascot').getAttribute('data-src'); if(u) new Image().src=u; };
+    if(window.requestIdleCallback) requestIdleCallback(warm,{timeout:4000}); else setTimeout(warm,2500); })();
 
 })();
 </script>
