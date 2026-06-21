@@ -35,6 +35,8 @@
   /* setup fills the viewport so the generate button lands at the bottom; the logo fills the slack (min/max bounded).
      logo is absolutely positioned so it takes the REAL leftover height (no flex %-height circular sizing) and never overflows */
   #setup{display:flex; flex-direction:column; min-height:calc(100vh - 32px); min-height:calc(100svh - 32px)}
+  .setup-body{flex:1 1 0; min-height:0; display:flex; flex-direction:column}
+  .setup-controls{display:flex; flex-direction:column}
   .topbar{position:relative; flex:1 1 0; min-height:90px; margin-bottom:0}
   .logo-img{position:absolute; inset:0; margin:auto; max-height:min(100%,320px); max-width:92%; width:auto; height:auto; display:block}
   .icon-btn{width:42px;height:42px;border:1px solid var(--line);background:#fff;border-radius:50%;
@@ -229,6 +231,51 @@
   .privacy.tight{margin-top:12px;font-size:11px}
 
   [hidden]{display:none!important}
+  /* ===== tablets =====
+     phone-first column above; here we spend the extra real-estate.
+     (1) portrait tablet: same single-column flow, just wider + larger.
+     (2) landscape tablet: setup splits into brand | controls (all 20 sounds on one 7-col board,
+         choices grouped & in order); results become a 2-col card grid so sentences stay big. */
+  @media (min-width:680px){
+    .app{max-width:680px; padding:10px 20px 28px}
+    .seclabel{font-size:21px; margin:9px 0 2px}
+    .hint{font-size:13px; margin:0 0 7px}
+    .lgrid{gap:10px}
+    .tile{font-size:clamp(24px,4.5vw,30px); border-radius:16px}
+    .tile.multi{font-size:clamp(16px,3.4vw,21px)}
+    .pos{font-size:16px; padding:10px 4px}
+    .stepnum{font-size:44px}
+    .stepbtn{width:50px; height:50px; font-size:27px}
+    .cta{font-size:21px; padding:17px}
+    .sent{font-size:clamp(24px,4.4vw,30px)}
+    .rbtn{font-size:18px; padding:13px 6px}
+    /* the progress sheet holds the auto-growing wall of sounds — give it room.
+       (other sheets stay compact cards on purpose; only #progress widens.) */
+    #progress .sheet{max-width:620px}
+  }
+
+  @media (min-width:880px) and (orientation:landscape){
+    .app{max-width:1000px; padding:10px 26px 28px}
+
+    /* setup → two panes: logo on one side, the three grouped choices on the other.
+       grid display overrides .setup-body's flex; stretch keeps both panes the same height
+       so the absolutely-positioned logo has a box to center inside. */
+    .setup-body{display:grid; grid-template-columns:0.82fr 1.18fr; gap:30px; align-items:stretch}
+    .topbar{flex:none; min-height:300px}
+    .setup-controls{align-self:center; width:100%}
+    .lgrid{grid-template-columns:repeat(7,1fr)}   /* all 20 sounds, no row-wrap scroll */
+    .cta{margin-top:16px}
+
+    /* results → 2-col card grid (gap replaces each ribbon's stacking margin) */
+    #sentences{display:grid; grid-template-columns:repeat(2,1fr); gap:14px; align-items:start}
+    #sentences .ribbon{margin-top:0}
+    .actionbar{flex-direction:row}
+
+    /* stats: wider sheet + the wall of practiced sounds becomes a 2-col grid */
+    #progress .sheet{max-width:780px}
+    #progress .snds{display:grid; grid-template-columns:1fr 1fr; gap:10px; align-items:start}
+  }
+
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
   @media print{
@@ -253,24 +300,30 @@
         <span class="ic-chev" id="glanceChev">‹</span>
       </button>
     </div>
-    <div class="topbar">
-      <img class="logo-img" src="logo.webp" alt="צלילון — משמיעים צלילים">
+    <!-- setup-body is a single column on phones; on a landscape tablet it splits into
+         brand pane (topbar) | controls pane (setup-controls) — see the tablet media queries -->
+    <div class="setup-body">
+      <div class="topbar">
+        <img class="logo-img" src="logo.webp" alt="צלילון — משמיעים צלילים">
+      </div>
+      <div class="setup-controls">
+        <div class="seclabel">בַּחֲרוּ צְלִיל</div>
+        <div class="lgrid" id="lgrid" role="radiogroup" aria-label="בחרו צליל"></div>
+
+        <div class="seclabel">אֵיפֹה הָאוֹת בַּמִּלָּה?</div>
+        <div class="hint">בַּחֲרוּ לְפָחוֹת מִקּוּם אֶחָד</div>
+        <div class="pos-row" id="posRow" role="group" aria-label="מיקום האות"></div>
+
+        <div class="seclabel">כַּמָּה מִשְׁפָּטִים?</div>
+        <div class="stepper">
+          <button class="stepbtn" id="stepMinus" aria-label="פחות">−</button>
+          <div class="stepnum" id="stepNum">5</div>
+          <button class="stepbtn" id="stepPlus" aria-label="עוד">+</button>
+        </div>
+
+        <button class="cta" id="btnGenerate">צְרוּ מִשְׁפָּטִים ✨</button>
+      </div>
     </div>
-    <div class="seclabel">בַּחֲרוּ צְלִיל</div>
-    <div class="lgrid" id="lgrid" role="radiogroup" aria-label="בחרו צליל"></div>
-
-    <div class="seclabel">אֵיפֹה הָאוֹת בַּמִּלָּה?</div>
-    <div class="hint">בַּחֲרוּ לְפָחוֹת מִקּוּם אֶחָד</div>
-    <div class="pos-row" id="posRow" role="group" aria-label="מיקום האות"></div>
-
-    <div class="seclabel">כַּמָּה מִשְׁפָּטִים?</div>
-    <div class="stepper">
-      <button class="stepbtn" id="stepMinus" aria-label="פחות">−</button>
-      <div class="stepnum" id="stepNum">5</div>
-      <button class="stepbtn" id="stepPlus" aria-label="עוד">+</button>
-    </div>
-
-    <button class="cta" id="btnGenerate">צְרוּ מִשְׁפָּטִים ✨</button>
   </section>
 
   <!-- ===== RESULTS ===== -->
