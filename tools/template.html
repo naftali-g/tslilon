@@ -137,8 +137,8 @@
   .fireworks svg{width:100%; height:100%; display:block}
   .fw{transform-box:fill-box; transform-origin:center; animation:burst 1.8s ease-out infinite}
   @keyframes burst{0%{transform:scale(.05);opacity:0}16%{opacity:1}66%{transform:scale(1);opacity:.85}100%{transform:scale(1.18);opacity:0}}
-  .win-mascot-img{width:124px;height:124px;object-fit:contain;margin:8px auto 10px;display:block;
-    filter:drop-shadow(0 8px 14px rgba(43,43,54,.16))}
+  .win-mascot-img{width:124px;height:124px;object-fit:contain;margin:8px auto 10px;display:block}
+  /* no CSS drop-shadow: the animation carries its own grounded bounce shadow */
   .win-title{font-family:var(--f-display);font-weight:700;font-size:30px;margin:4px 0}
   .settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line);font-family:var(--f-round);font-weight:700}
   .settings-row:last-of-type{border-bottom:none}
