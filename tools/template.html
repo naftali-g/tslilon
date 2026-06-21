@@ -164,17 +164,16 @@
   .ic-open{cursor:pointer}                 /* setup pill is tappable (opens progress); results pill is not */
   .ic-open:active{transform:scale(.99)}
   .ic-who{flex:0 1 auto;min-width:0;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}   /* min-width:0 so long names ellipsize instead of blowing out the chip */
-  .idchip .wkdots{flex:0 0 auto}
   .ic-chev{flex:0 0 auto;color:var(--slate);font-size:18px;margin-inline-start:auto}
   .ic-open:focus-visible,.idchip .icon-btn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 
-  /* week strip: oldest -> today, right -> left (RTL). a gap is a quiet empty dot — no penalty (the "no streak" choice) */
-  .wkdots{display:flex;gap:6px;align-items:center}
-  .wkd{width:13px;height:13px;border-radius:50%;background:#E3DECF;flex:0 0 auto}
-  .wkd.on{background:linear-gradient(135deg,var(--mint),var(--blue))}
-  .wkd.today{box-shadow:0 0 0 3px rgba(246,183,60,.4)}      /* ring marks "today"; gold fill only once today is practiced */
-  .wkd.today.on{background:var(--gold)}
-  .glance-wk .wkd{width:11px;height:11px}
+  /* week strip = a tiny labeled week calendar: the day-letter sits in each cell, filled when practiced, today ringed.
+     an unfilled cell is a quiet gap — no penalty (the "no streak" choice). oldest -> today, right -> left (RTL). */
+  .wkdots{display:flex;gap:5px;align-items:center}
+  .wkc{width:24px;height:24px;border-radius:8px;background:#ECE5D7;display:grid;place-items:center;flex:0 0 auto;
+    font-family:var(--f-round);font-weight:700;font-size:11.5px;color:#B3AA95}
+  .wkc.on{background:linear-gradient(135deg,var(--mint),var(--blue));color:#fff}   /* practiced */
+  .wkc.today{box-shadow:0 0 0 2.5px var(--gold)}                                    /* ring = today (fill still reflects practiced) */
 
   /* progress sheet */
   .sheet-head{font-family:var(--f-display);font-weight:700;font-size:22px;margin:2px 0 14px}
@@ -191,9 +190,10 @@
   .sndrow .stile{width:50px;height:50px;border-radius:14px;flex:0 0 auto;display:grid;place-items:center;
     font-family:var(--f-round);font-weight:700;font-size:23px;color:var(--ink);box-shadow:var(--shadow-sm)}
   .sndrow .stile.multi{font-size:15px;letter-spacing:-.5px}
+  .sndrow .meta{flex:1;min-width:0}
   .sndrow .meta .ct{font-family:var(--f-round);font-weight:700;font-size:15px}
   .sndrow .meta .sub{font-size:11.5px;color:var(--slate);margin-top:1px}
-  .sndrow .wt{margin-inline-start:auto;align-self:center}
+  .poslist{display:flex;gap:18px;margin-top:6px;flex-wrap:wrap}   /* one standalone triplet per position; gap (vs 3px within) sets them clearly apart */
 
   /* empty state — day one: an invitation, never a goose-egg of zeros */
   .empty-note{font-family:var(--f-round);font-weight:700;font-size:15.5px;color:var(--ink);margin:2px 0 16px}
@@ -245,7 +245,6 @@
       <button class="icon-btn" id="btnSettings" aria-label="הגדרות">⚙</button>
       <button class="chip-pill ic-open" id="glance" aria-label="ההתקדמות שלי">
         <span class="ic-who" id="glanceWho">שָׁלוֹם!</span>
-        <span class="wkdots glance-wk" id="glanceWeek" aria-hidden="true"></span>
         <span class="ic-chev">‹</span>
       </button>
     </div>
@@ -747,7 +746,8 @@
   // local date key — NOT toISOString() (that's UTC and flips "today" at the wrong hour)
   function dayKey(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
   function todayKey(){ return dayKey(new Date()); }
-  function offsetKey(k){ var d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()-k); return dayKey(d); }  // midday avoids DST edges
+  function offsetDate(k){ var d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()-k); return d; }  // k days ago (midday avoids DST edges)
+  var DAYLETTER=['א','ב','ג','ד','ה','ו','ש'];   // getDay(): 0=Sun(א) .. 6=Sat(ש)
 
   function recordPracticed(L, positions){
     if(!L || !tracking()) return;     // no name → save nothing (the user skipped onboarding)
@@ -761,20 +761,20 @@
 
   function renderWeek(box){
     if(!box) return; box.innerHTML='';
-    for(var k=6;k>=0;k--){ var b=el('span','wkd');           // oldest -> today, right -> left (RTL)
-      if(stats.days[offsetKey(k)]) b.classList.add('on');
-      if(k===0) b.classList.add('today');
-      box.appendChild(b); }
+    for(var k=6;k>=0;k--){                                    // oldest -> today, right -> left (RTL)
+      var d=offsetDate(k), c=el('span','wkc');
+      c.textContent=DAYLETTER[d.getDay()];                   // day-letter inside the cell
+      if(stats.days[dayKey(d)]) c.classList.add('on');
+      if(k===0) c.classList.add('today');
+      box.appendChild(c); }
   }
   function renderGlance(){
-    var who=$('#glanceWho'), wk=$('#glanceWeek'), open=$('#glance');
+    var who=$('#glanceWho'), open=$('#glance');   // chip is just name + chevron now; the labeled week lives in the progress sheet
     if(tracking()){
       who.textContent='שָׁלוֹם, '+profile.name;
-      wk.hidden=false; renderWeek(wk);
       if(open) open.setAttribute('aria-label','הַהִתְקַדְּמוּת שֶׁלִּי');
-    } else {                                   // skipped → gentle opt-in (tap opens onboarding); no dots, nothing tracked
+    } else {                                   // skipped → gentle opt-in (tap opens onboarding); nothing tracked
       who.textContent='מִי מְשַׂחֵק?';
-      wk.hidden=true; wk.innerHTML='';
       if(open) open.setAttribute('aria-label','הַזָּנַת שֵׁם לְמַעֲקָב');
     }
   }
@@ -796,10 +796,17 @@
       var meta=el('div','meta');
       var ct=el('div','ct'); ct.textContent=sd.s+' מִשְׁפָּטִים'; meta.appendChild(ct);
       var sub=el('div','sub'); sub.textContent=Object.keys(sd.d||{}).length+' יָמִים שֶׁל תִּרְגּוּל'; meta.appendChild(sub);
-      var wt=el('div','wt');                                                   // word-tiles: which positions were practiced
-      ['FIRST','MIDDLE','LAST'].forEach(function(P){ var b=document.createElement('b');
-        if(sd.p&&sd.p[P]){ b.className='on'; b.textContent=g1; b.style.background=tint; b.style.borderColor='#E2DBCB'; b.style.color='#2B2B36'; } wt.appendChild(b); });
-      row.appendChild(tile); row.appendChild(meta); row.appendChild(wt); box.appendChild(row);
+      // one standalone triplet per practiced position, first→middle→last — each shows the letter in its single slot, like the picker
+      var ORDER=['FIRST','MIDDLE','LAST'], poslist=el('div','poslist');
+      ORDER.filter(function(P){ return sd.p&&sd.p[P]; }).forEach(function(P){
+        var wt=el('div','wt');
+        ORDER.forEach(function(Q){ var b=document.createElement('b');
+          if(Q===P){ b.className='on'; b.textContent=g1; b.style.background=tint; b.style.borderColor='#E2DBCB'; b.style.color='#2B2B36'; }
+          wt.appendChild(b); });
+        poslist.appendChild(wt);
+      });
+      meta.appendChild(poslist);
+      row.appendChild(tile); row.appendChild(meta); box.appendChild(row);
     });
   }
 
