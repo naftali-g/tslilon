@@ -4,12 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-אוֹתִיּוֹת מְדַבְּרוֹת ("Talking Letters") — a Hebrew speech-therapy game for kids. The
-user picks a **sound** (phoneme) + position(s) (first/middle/last) + a count, and the
-game generates grammatical, ≥3-word Hebrew sentences where **every word makes that sound
-at the chosen position**. RTL kids' UI, fully niqqud-vocalized, with Web Speech TTS.
+צְלִילוֹן ("Tslilon" — roughly "little sound"); tagline מַשְׁמִיעִים צְלִילִים ("we make
+sounds heard"). A Hebrew speech-therapy game for kids. The user picks a **sound** (phoneme)
++ position(s) (first/middle/last) + a count, and the game generates grammatical, ≥3-word
+Hebrew sentences where **every word makes that sound at the chosen position**. RTL kids' UI,
+fully niqqud-vocalized, with Web Speech TTS.
 
-Deploys to **GitHub Pages** (`origin` = `naftali-g/talking-letters`) as a static folder:
+Formerly **אוֹתִיּוֹת מְדַבְּרוֹת ("Talking Letters")** — renamed because that name was taken,
+and to put the focus on the **sound** rather than the letter. The mascot changed with it: the
+old smiling **alef** became an orange **speech-bubble** creature (a sound, not a letter), and
+the win screen plays an animated jumping version (`mascot_anim.webp`).
+
+Deploys to **GitHub Pages** (`origin` = `naftali-g/talking-letters` — the repo slug still
+reflects the old name; only the product branding was renamed) as a static folder:
 `index.html` + `lexicon.json` + the image assets at the repo root. Multi-file is fine —
 single-file is *not* a requirement.
 
@@ -22,11 +29,13 @@ python3 tools/merge_lexicon.py      # -> tools/words.py        (combine sources)
 python3 tools/build_lexicon.py      # -> lexicon.json + index.html + tools/coverage.md
 python3 tools/test_lexicon.py       # verify the shipped lexicon.json (exit 1 on failure)
 python3 tools/make_assets.py        # rebuild logo.webp / favicon.png / mascot.webp from logo.png
+python3 tools/make_mascot_anim.py   # rebuild mascot_anim.webp (looping win-screen bubble) from jumping_logo.mp4  [needs PyAV: pip install av]
 python3 tools/analyze_sounds.py     # read-only phoneme coverage + matres/silent sanity report
 ```
 
 After any lexicon change: run `merge_lexicon.py` → `build_lexicon.py` → `test_lexicon.py`.
-Image assets are independent — only re-run `make_assets.py` if `logo.png` changes.
+Image assets are independent: re-run `make_assets.py` only if `logo.png` changes, and
+`make_mascot_anim.py` only if `jumping_logo.mp4` changes.
 
 There is no dev server: open `index.html` directly (`file://`) — asset references are relative
 so it works both locally and on Pages.
