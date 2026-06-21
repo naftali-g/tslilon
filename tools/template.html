@@ -165,6 +165,10 @@
   .ic-open:active{transform:scale(.99)}
   .ic-who{flex:0 1 auto;min-width:0;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}   /* min-width:0 so long names ellipsize instead of blowing out the chip */
   .ic-chev{flex:0 0 auto;color:var(--slate);font-size:18px;margin-inline-start:auto}
+  /* explicit "open my progress" tag — makes it clear the chip is tappable, not just a label */
+  .ic-tag{flex:0 0 auto;margin-inline-start:auto;display:flex;align-items:center;gap:4px;
+    background:#EAF3FF;color:#2D6BA3;border-radius:99px;padding:4px 10px;font-size:12px}
+  .ic-tag .tchev{font-size:14px}
   .ic-open:focus-visible,.idchip .icon-btn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 
   /* week strip = a tiny labeled week calendar: the day-letter sits in each cell, filled when practiced, today ringed.
@@ -245,7 +249,8 @@
       <button class="icon-btn" id="btnSettings" aria-label="הגדרות">⚙</button>
       <button class="chip-pill ic-open" id="glance" aria-label="ההתקדמות שלי">
         <span class="ic-who" id="glanceWho">שָׁלוֹם!</span>
-        <span class="ic-chev">‹</span>
+        <span class="ic-tag" id="glanceTag" hidden>הַהִתְקַדְּמוּת שֶׁלִּי <span class="tchev">‹</span></span>
+        <span class="ic-chev" id="glanceChev">‹</span>
       </button>
     </div>
     <div class="topbar">
@@ -769,12 +774,14 @@
       box.appendChild(c); }
   }
   function renderGlance(){
-    var who=$('#glanceWho'), open=$('#glance');   // chip is just name + chevron now; the labeled week lives in the progress sheet
+    var who=$('#glanceWho'), open=$('#glance'), tag=$('#glanceTag'), chev=$('#glanceChev');
     if(tracking()){
       who.textContent='שָׁלוֹם, '+profile.name;
+      tag.hidden=false; chev.hidden=true;         // explicit "הַהִתְקַדְּמוּת שֶׁלִּי" tag → opens the progress sheet
       if(open) open.setAttribute('aria-label','הַהִתְקַדְּמוּת שֶׁלִּי');
-    } else {                                   // skipped → gentle opt-in (tap opens onboarding); nothing tracked
+    } else {                                      // skipped → gentle opt-in (tap opens onboarding); plain chevron, no progress tag
       who.textContent='מִי מְשַׂחֵק?';
+      tag.hidden=true; chev.hidden=false;
       if(open) open.setAttribute('aria-label','הַזָּנַת שֵׁם לְמַעֲקָב');
     }
   }
