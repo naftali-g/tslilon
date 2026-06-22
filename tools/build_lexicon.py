@@ -247,7 +247,12 @@ def write_coverage_md(matrix, lex):
     lines = ["# Coverage matrix — phoneme model\n",
              f"_{len(lex['nouns'])} nouns · {len(lex['adjectives'])} adjectives · {len(lex['verbs'])} verbs._\n"]
     feasible = sum(1 for v in matrix.values() if v["ok"])
-    lines.append(f"**Feasible cells: {feasible}/{len(matrix)}**\n")
+    word_feasible = sum(1 for v in matrix.values() if v["n"] >= 1)
+    lines.append(f"**Sentence-feasible cells: {feasible}/{len(matrix)}**  ·  "
+                 f"**Word-feasible cells (≥1 noun): {word_feasible}/{len(matrix)}**\n")
+    word_only = [f"{ph}/{P}" for (ph, P), v in matrix.items() if v["n"] >= 1 and not v["ok"]]
+    if word_only:
+        lines.append("Word-only (no full sentence): " + ", ".join(word_only) + "\n")
     lines.append("| צליל | אותיות | תחילה | אמצע | סוף |")
     lines.append("|---|---|---|---|---|")
     for ph in PHONEMES:
@@ -271,7 +276,12 @@ def main():
         "phonemes": PHONEMES,
         "sources": SOURCES,
         "positions": POSITIONS,
+        # feas = a full SENTENCE can be built (agreement across noun+adj+verb).
+        # feasWord = single-word drill: >=1 noun whose target sound is confined to the cell.
+        # feasWord is a SUPERSET of feas (a sentence always needs a confined noun subject),
+        # so a sentence-dead cell can still be word-feasible — the picker gates each mode separately.
         "feas": {ph: {P: matrix[(ph, P)]["ok"] for P in POSITIONS} for ph in PHONEMES},
+        "feasWord": {ph: {P: matrix[(ph, P)]["n"] >= 1 for P in POSITIONS} for ph in PHONEMES},
     }
 
     minified = json.dumps({**lex, "meta": meta}, ensure_ascii=False, separators=(",", ":"))
@@ -291,12 +301,13 @@ def main():
 
     write_coverage_md(matrix, lex)
     feasible = sum(1 for v in matrix.values() if v["ok"])
+    word_feasible = sum(1 for v in matrix.values() if v["n"] >= 1)
 
     print("=" * 66)
     print(f"BUILD  nouns={len(lex['nouns'])} adj={len(lex['adjectives'])} verbs={len(lex['verbs'])} "
           f"forms={surface_form_count(lex)}")
     print(f"  lexicon.json {size_kb:.1f} KB" + (f"   index.html {index_kb:.1f} KB" if index_kb else ""))
-    print(f"  coverage {feasible}/{len(matrix)} (phoneme×position) feasible")
+    print(f"  coverage {feasible}/{len(matrix)} sentence · {word_feasible}/{len(matrix)} word (phoneme×position)")
     if WARNINGS:
         print(f"  WARNINGS ({len(WARNINGS)}):")
         for w in WARNINGS[:20]: print("   -", w)

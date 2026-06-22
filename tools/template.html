@@ -121,6 +121,21 @@
   .cta.mint{background:linear-gradient(90deg,var(--mint),var(--blue));box-shadow:0 12px 22px rgba(102,217,168,.4)}
   .cta.grape{background:linear-gradient(90deg,#B39DDB,#8E6FD0);box-shadow:0 12px 22px rgba(142,111,208,.42)}
 
+  /* practice-mode toggle (single words vs. full sentences) — segmented control, first decision in setup.
+     mirrors the .listen-group segmented language; the chosen mode reframes the count label + CTA. */
+  .modeseg{display:flex;background:#fff;border:1px solid var(--line);border-radius:16px;padding:4px;gap:4px;
+    box-shadow:var(--shadow-sm);margin-top:2px}
+  .modebtn{flex:1;border:none;background:none;border-radius:12px;padding:11px 6px;cursor:pointer;
+    font-family:var(--f-round);font-weight:700;font-size:14.5px;color:var(--slate);
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s,color .15s}
+  .modebtn.on{background:linear-gradient(90deg,var(--coral),var(--mango));color:#fff;
+    box-shadow:0 6px 14px rgba(255,122,133,.32)}
+  .modebtn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+  /* mini letter-block glyph (same motif as the .pos preview squares): 1 block = word, 3 = sentence */
+  .modebtn .mini{display:inline-flex;gap:3px}
+  .modebtn .mini i{width:10px;height:10px;border-radius:3px;background:currentColor;opacity:.85;display:block}
+  .modebtn .mini.sentence i{width:7px}
+
   /* results */
   .editbtn{border:none;background:none;font-size:18px;cursor:pointer;color:var(--slate);flex:0 0 auto}
   .progress{display:flex;align-items:center;gap:10px;justify-content:center;font-size:13px;color:var(--slate);margin:12px 0 4px}
@@ -134,6 +149,7 @@
     animation:pop .3s ease both}
   .ribbon.done{background:#F4FBF7;border-color:#CDEBDD}
   .sent{font-weight:700;font-size:clamp(20px,5.5vw,26px);line-height:1.5;text-align:center}
+  .sent.solo{font-size:clamp(26px,8vw,34px)}   /* word mode: the lone word is the hero */
   .word{cursor:pointer;border-radius:6px;padding:0 1px;transition:background .15s}
   .word:active{background:#EAF7FF}
   .tg{color:var(--target);background:rgba(255,213,79,.5);border-radius:5px;padding:0 1px;font-weight:800}
@@ -387,6 +403,12 @@
         <img class="logo-img" src="logo.webp" alt="צלילון — משמיעים צלילים">
       </div>
       <div class="setup-controls">
+        <div class="modeseg" id="modeSeg" role="radiogroup" aria-label="מצב תרגול">
+          <button type="button" class="modebtn" data-mode="word" role="radio" aria-checked="false">
+            <span class="mini"><i></i></span>מִלִּים בּוֹדְדוֹת</button>
+          <button type="button" class="modebtn" data-mode="sentence" role="radio" aria-checked="true">
+            <span class="mini sentence"><i></i><i></i><i></i></span>מִשְׁפָּטִים</button>
+        </div>
         <div class="seclabel">בַּחֲרוּ צְלִיל</div>
         <div class="lgrid" id="lgrid" role="radiogroup" aria-label="בחרו צליל"></div>
 
@@ -394,7 +416,7 @@
         <div class="hint">בַּחֲרוּ לְפָחוֹת מִקּוּם אֶחָד</div>
         <div class="pos-row" id="posRow" role="group" aria-label="מיקום האות"></div>
 
-        <div class="seclabel">כַּמָּה מִשְׁפָּטִים?</div>
+        <div class="seclabel" id="countLabel">כַּמָּה מִשְׁפָּטִים?</div>
         <div class="stepper">
           <button class="stepbtn" id="stepMinus" aria-label="פחות">−</button>
           <div class="stepnum" id="stepNum">5</div>
@@ -425,7 +447,7 @@
       <button class="cta mint" id="btnShuffle">עוֹד מִשְׁפָּטִים</button>
       <button class="cta grape" id="btnBack">אוֹת חֲדָשָׁה</button>
     </div>
-    <div class="note">›שִׁמְעוּ‹ לִשְׁמֹעַ אֶת הַמִּשְׁפָּט · ›אָמַרְתִּי‹ אַחֲרֵי שֶׁאֲמַרְתֶּם בְּקוֹל · אֶפְשָׁר גַּם לְהַקִּישׁ עַל מִלָּה</div>
+    <div class="note" id="resNote">›שִׁמְעוּ‹ לִשְׁמֹעַ אֶת הַמִּשְׁפָּט · ›אָמַרְתִּי‹ אַחֲרֵי שֶׁאֲמַרְתֶּם בְּקוֹל · אֶפְשָׁר גַּם לְהַקִּישׁ עַל מִלָּה</div>
   </section>
 </div>
 
@@ -508,7 +530,7 @@
     <div id="progBody">
       <div class="stats3">
         <div class="stat"><div class="n" id="progDays">0</div><div class="l">יָמִים</div></div>
-        <div class="stat"><div class="n" id="progSent">0</div><div class="l">מִשְׁפָּטִים</div></div>
+        <div class="stat"><div class="n" id="progSent">0</div><div class="l">תִּרְגּוּלִים</div></div>
       </div>
       <div class="wkrow">הַשָּׁבוּעַ <span class="wkdots" id="progWeek"></span></div>
       <div class="walltitle">הַצְּלִילִים שֶׁלִּי</div>
@@ -567,7 +589,7 @@
     return null;
   }
 
-  var state = { letter:null, positions:[], n:5, sentences:[], practiced:{}, counted:{}, celebrated:false, ttsOn:true };
+  var state = { letter:null, positions:[], n:5, mode:'sentence', sentences:[], practiced:{}, counted:{}, celebrated:false, ttsOn:true };
 
   function $(s){return document.querySelector(s);}
   function el(t,c){var e=document.createElement(t); if(c)e.className=c; return e;}
@@ -585,8 +607,10 @@
   function resetRun(){ state.sentences=[]; state.practiced={}; state.counted={}; state.celebrated=false; }   // clear an in-flight practice set
   function dismissOnBackdrop(sel){ $(sel).addEventListener('click',function(e){ if(e.target===this) this.hidden=true; }); }
 
-  // ---------- feasibility matrix (per phoneme × position) — precomputed by build_lexicon.py ----------
-  var FEAS = META.feas;
+  // ---------- feasibility matrices (per phoneme × position) — precomputed by build_lexicon.py ----------
+  // FEAS = a full sentence is possible; FEASW = a single-word drill is possible (>=1 confined noun).
+  // FEASW is a superset of FEAS, so each mode gates the position pills with its own matrix.
+  var FEAS = META.feas, FEASW = META.feasWord || META.feas;
 
   // ---------- generation engine ----------
   function candidatesFor(L, ps){
@@ -632,6 +656,15 @@
       var key=s.join(' '); if(seen[key]) continue;
       seen[key]=1; out.push(s);
     }
+    return out;
+  }
+  // single-word drill: nouns whose target sound is confined to the chosen position(s) — same matchPos
+  // predicate as candidatesFor. Each word is returned as a 1-element array so the whole results pipeline
+  // (renderWord, ribbon, listen/slow/said, progress, celebration) is shared with sentence mode unchanged.
+  function generateWords(L, ps, n){
+    var pool = shuffle(LEX.nouns.filter(function(e){ return matchPos(e.idx, L, ps); }));
+    var out=[], seen={};
+    for(var i=0;i<pool.length && out.length<n;i++){ var w=pool[i].w; if(seen[w]) continue; seen[w]=1; out.push([w]); }
     return out;
   }
 
@@ -725,16 +758,14 @@
     posRow.appendChild(d);
   });
 
-  function selectPhon(L){
-    state.letter=L;
-    var glyph=glyphOf(L);   // representative glyph for the position preview (keeps dagesh/dot)
-    var tint=tintFor(L), dark=darken(tint);   // chosen letter's tint + a darker shade for the "chosen" pill
-    each(lgrid.children,function(tile){
-      var on=tile.dataset.phon===L; tile.classList.toggle('sel',on); tile.setAttribute('aria-checked',on?'true':'false');
-    });
-    // gate positions by feasibility (per sound); drop now-impossible selections; show the letter in each slot
+  // gate positions by feasibility for the CURRENT mode; drop now-impossible selections; show the letter in each slot.
+  // re-run on both sound-pick and mode-switch (word mode unlocks more cells than sentence mode).
+  function applyFeas(){
+    if(!state.letter) return;
+    var L=state.letter, F=(state.mode==='word'?FEASW:FEAS), glyph=glyphOf(L),
+        tint=tintFor(L), dark=darken(tint);   // chosen letter's tint + a darker shade for the "chosen" pill
     each(posRow.children,function(d){
-      var P=d.dataset.pos, feasible=FEAS[L][P];
+      var P=d.dataset.pos, feasible=F[L][P];
       d.classList.toggle('disabled',!feasible);
       d.tabIndex = feasible ? 0 : -1;                  // infeasible pills drop out of the tab order
       d.style.setProperty('--lt',tint); d.style.setProperty('--ltd',dark);   // pill = letter tint; chosen state = darker shade
@@ -742,6 +773,13 @@
       if(!feasible){ d.classList.remove('on'); d.setAttribute('aria-checked','false');
         var k=state.positions.indexOf(P); if(k>=0) state.positions.splice(k,1); }
     });
+  }
+  function selectPhon(L){
+    state.letter=L;
+    each(lgrid.children,function(tile){
+      var on=tile.dataset.phon===L; tile.classList.toggle('sel',on); tile.setAttribute('aria-checked',on?'true':'false');
+    });
+    applyFeas();
     speak(NAMES[L]||SOURCES[L], false);   // say the letter name(s) (skips the no-voice probe — short utterance)
     if(!state.positions.length) pulse(posRow,'bob');   // sound picked, no position yet → draw the eye to the next step
   }
@@ -755,6 +793,24 @@
   $('#stepMinus').addEventListener('click',function(){ setN(Math.max(1,state.n-1)); });
   $('#stepPlus').addEventListener('click',function(){ setN(Math.min(10,state.n+1)); });
   setN((function(){ try{ var v=parseInt(localStorage.getItem('tslilon.n'),10); return (v>=1&&v<=10)?v:5; }catch(e){ return 5; } })());  // remember last chosen count
+
+  // ---------- practice mode (single words vs. full sentences) ----------
+  var modeSeg=$('#modeSeg'), countLabel=$('#countLabel');
+  // a mode switch reframes the whole session: toggle state, count label ("כמה מילים?"), CTA, and re-gate positions
+  function applyMode(){
+    var word=(state.mode==='word');
+    each(modeSeg.querySelectorAll('.modebtn'),function(b){
+      var on=b.dataset.mode===state.mode; b.classList.toggle('on',on); b.setAttribute('aria-checked',on?'true':'false');
+    });
+    countLabel.textContent = word ? 'כַּמָּה מִלִּים?' : 'כַּמָּה מִשְׁפָּטִים?';
+    btnGen.textContent     = word ? 'צְרוּ מִלִּים ✨' : 'צְרוּ מִשְׁפָּטִים ✨';
+    applyFeas();                                  // word mode unlocks more cells than sentence mode
+  }
+  function setMode(m){ state.mode=(m==='word'?'word':'sentence'); applyMode();
+    try{ localStorage.setItem('tslilon.mode', state.mode); }catch(e){} }
+  each(modeSeg.querySelectorAll('.modebtn'),function(b){ b.addEventListener('click',function(){ setMode(b.dataset.mode); }); });
+  state.mode=(function(){ try{ var m=localStorage.getItem('tslilon.mode'); return (m==='word')?'word':'sentence'; }catch(e){ return 'sentence'; } })();  // remember last chosen mode
+  applyMode();
 
   // ---------- results UI ----------
   function show(id){ $('#setup').hidden=(id!=='setup'); $('#results').hidden=(id!=='results'); }
@@ -775,19 +831,29 @@
     return '<bdi class="word" tabindex="0">'+html+'</bdi>';
   }
   function doGenerate(){
-    var res = generate(state.letter, state.positions, state.n);
+    var word=(state.mode==='word');
+    var res = word ? generateWords(state.letter, state.positions, state.n)
+                   : generate(state.letter, state.positions, state.n);
     resetRun(); state.sentences = res;
     // always display start·middle·end in canonical order (POS), not the order the pills were tapped
     var posTxt = POS.filter(function(p){return state.positions.indexOf(p)>=0;}).map(function(p){return POS_SHORT[p];}).join(' · ');
-    $('#resSummary').textContent = 'הַצְּלִיל: '+SOURCES[state.letter]+' · '+posTxt+' · '+res.length;
+    $('#resSummary').textContent = 'הַצְּלִיל: '+SOURCES[state.letter]+' · '+posTxt+' · '+res.length+(word?' מִלִּים':'');
     var cap=$('#capNote');
-    if(res.length < state.n){ cap.hidden=false; cap.textContent='מָצָאנוּ '+res.length+' מִשְׁפָּטִים לַמִּקּוּם הַזֶּה — נַסּוּ עוֹד מִקּוּם לְעוֹד מִשְׁפָּטִים'; }
+    if(res.length < state.n){ cap.hidden=false; cap.textContent = word
+        ? 'מָצָאנוּ '+res.length+' מִלִּים לַמִּקּוּם הַזֶּה — נַסּוּ עוֹד מִקּוּם לְעוֹד מִלִּים'
+        : 'מָצָאנוּ '+res.length+' מִשְׁפָּטִים לַמִּקּוּם הַזֶּה — נַסּוּ עוֹד מִקּוּם לְעוֹד מִשְׁפָּטִים'; }
     else cap.hidden=true;
+    // reframe the per-mode wording on the results screen (shuffle/celebrate buttons + the help note)
+    $('#btnShuffle').textContent = word ? 'עוֹד מִלִּים' : 'עוֹד מִשְׁפָּטִים';
+    $('#btnMore').textContent    = word ? 'עוֹד מִלִּים' : 'עוֹד מִשְׁפָּטִים';
+    $('#resNote').textContent    = word
+      ? '›שִׁמְעוּ‹ לִשְׁמֹעַ אֶת הַמִּלָּה · ›אָמַרְתִּי‹ אַחֲרֵי שֶׁאֲמַרְתֶּם בְּקוֹל'
+      : '›שִׁמְעוּ‹ לִשְׁמֹעַ אֶת הַמִּשְׁפָּט · ›אָמַרְתִּי‹ אַחֲרֵי שֶׁאֲמַרְתֶּם בְּקוֹל · אֶפְשָׁר גַּם לְהַקִּישׁ עַל מִלָּה';
 
     var box=$('#sentences'); box.innerHTML='';
     res.forEach(function(words,i){
       var r=el('div','ribbon'); r.dataset.i=i; r.style.animationDelay=(i*0.05)+'s';
-      var sent=el('div','sent'); sent.innerHTML=words.map(renderWord).join(' ');
+      var sent=el('div','sent'+(word?' solo':'')); sent.innerHTML=words.map(renderWord).join(' ');
       var ctrl=el('div','ribbon-ctrl');
       var lgroup=el('div','listen-group');
       var listen=el('button','rbtn listen'); listen.textContent='🔊 שִׁמְעוּ'; listen.setAttribute('aria-label','השמעת המשפט');
@@ -816,7 +882,7 @@
     if(state.practiced[i]){ delete state.practiced[i]; r.classList.remove('done'); said.textContent='✓ אָמַרְתִּי'; said.classList.remove('is-done'); }
     else { state.practiced[i]=1; r.classList.add('done'); said.textContent='✓ תִּרְגַּלְנוּ'; said.classList.add('is-done');
       // count each sentence at most once per generated set (toggling off doesn't subtract — it's a motivational tally, not a ledger)
-      if(!state.counted[i]){ state.counted[i]=1; recordPracticed(state.letter, state.positions); } }
+      if(!state.counted[i]){ state.counted[i]=1; recordPracticed(state.letter, state.positions, state.mode); } }
     updateProgress();
     // gate so un-toggling then re-completing a set doesn't replay fireworks/milestone (stats are already counted-guarded)
     if(!state.celebrated && state.sentences.length && Object.keys(state.practiced).length===state.sentences.length){ state.celebrated=true; setTimeout(celebrate,450); }
@@ -842,7 +908,7 @@
   function celebrate(){
     var name=tracking()?profile.name:'';
     $('#winTitle').textContent='כָּל הַכָּבוֹד'+(name?(', '+name):'')+'!';
-    $('#winText').innerHTML='תִּרְגַּלְ'+verbEnd()+' אֶת כָּל '+state.sentences.length+' הַמִּשְׁפָּטִים עִם הָאוֹת <b>'+SOURCES[state.letter]+'</b>';
+    $('#winText').innerHTML='תִּרְגַּלְ'+verbEnd()+' אֶת כָּל '+state.sentences.length+' '+(state.mode==='word'?'הַמִּלִּים':'הַמִּשְׁפָּטִים')+' עִם הָאוֹת <b>'+SOURCES[state.letter]+'</b>';
     if(tracking()){                            // week strip + milestone are tracking artifacts — skip them when not tracking
       $('#winWeekRow').hidden=false; renderWeek($('#winWeek'));
       // milestone fires only on real "firsts": the very first completed practice EVER, or the first on a NEW day.
@@ -916,12 +982,13 @@
   function offsetDate(k){ var d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()-k); return d; }  // k days ago (midday avoids DST edges)
   var DAYLETTER=['א','ב','ג','ד','ה','ו','ש'];   // getDay(): 0=Sun(א) .. 6=Sat(ש)
 
-  function recordPracticed(L, positions){
+  function recordPracticed(L, positions, mode){
     if(!L || !tracking()) return;     // no name → save nothing (the user skipped onboarding)
     var t=todayKey();
-    stats.days[t]=(stats.days[t]||0)+1; stats.total=(stats.total||0)+1;
-    var sd=stats.sounds[L]||(stats.sounds[L]={s:0,d:{},p:{}});
-    sd.s++; sd.d[t]=1; sd.last=Date.now();   // recency stamp → "most recently practiced" ordering in the progress list
+    stats.days[t]=(stats.days[t]||0)+1; stats.total=(stats.total||0)+1;       // total = all practices (sentences + words)
+    var sd=stats.sounds[L]||(stats.sounds[L]={s:0,w:0,d:{},p:{}});
+    if(mode==='word') sd.w=(sd.w||0)+1; else sd.s=(sd.s||0)+1;                // sentences vs. words counted separately per sound
+    sd.d[t]=1; sd.last=Date.now();   // recency stamp → "most recently practiced" ordering in the progress list
     (positions||[]).forEach(function(P){ sd.p[P]=1; });
     saveStats(); renderGlance();
   }
@@ -963,7 +1030,9 @@
       var tile=el('div','stile'+(full.indexOf('/')>=0?' multi':'')); tile.textContent=full;
       var tint=tintFor(L); tile.style.background=tint;   // same tint the letter has in the picker
       var meta=el('div','meta');
-      var ct=el('div','ct'); ct.textContent=sd.s+' מִשְׁפָּטִים'; meta.appendChild(ct);
+      // per-sound tally: show whichever modes were practiced ("5 מִשְׁפָּטִים · 8 מִלִּים", or just one)
+      var parts=[]; if(sd.s) parts.push(sd.s+' מִשְׁפָּטִים'); if(sd.w) parts.push(sd.w+' מִלִּים');
+      var ct=el('div','ct'); ct.textContent=parts.join(' · ')||((sd.s||0)+' מִשְׁפָּטִים'); meta.appendChild(ct);
       var sub=el('div','sub'); sub.textContent=Object.keys(sd.d||{}).length+' יָמִים שֶׁל תִּרְגּוּל'; meta.appendChild(sub);
       // one standalone triplet per practiced position, first→middle→last — each shows the letter in its single slot, like the picker
       var poslist=el('div','poslist');   // canonical first→middle→last order from meta (POS)

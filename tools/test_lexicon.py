@@ -155,6 +155,33 @@ for ph, ps in [("SH", ["FIRST", "LAST"]), ("X", ["FIRST", "MIDDLE", "LAST"])]:
             check(mpos(pidx(w), ph, ps), f'multi "{w}": /{ph}/ not confined to {ps}')
 
 
+# ---- (2b) WORD MODE: single-word drill — nouns whose target sound is confined to the cell ----
+# Mirrors generateWords() in template.html (LEX.nouns filtered by mpos). Also checks the shipped
+# meta.feasWord matrix against an independent recompute, and that it's a SUPERSET of meta.feas
+# (a full sentence always needs a confined noun subject, so sentence-feasible => word-feasible).
+META = LEX["meta"]
+feasW = META.get("feasWord")
+feasS = META.get("feas")
+check(feasW is not None, "meta.feasWord missing — rebuild lexicon.json (python3 tools/build_lexicon.py)")
+word_feasible = 0
+for ph in PHON:
+    for P in POS:
+        words = [e["w"] for e in LEX["nouns"] if mpos(e["idx"], ph, [P])]
+        if words:
+            word_feasible += 1
+        for w in words:
+            check(mpos(pidx(w), ph, [P]), f'word-mode "{w}": /{ph}/ not confined to {P}')
+        if feasW is not None:
+            check(bool(words) == bool(feasW[ph][P]), f"feasWord {ph}/{P}: meta={feasW[ph][P]} but {len(words)} words")
+        if feasS is not None and feasS[ph][P]:
+            check(bool(words), f"sentence-feasible but word-infeasible at {ph}/{P}")
+
+# word-mode multi-position confinement (the picker allows unions of positions)
+for ph, ps in [("SH", ["FIRST", "LAST"]), ("S", ["FIRST", "MIDDLE"])]:
+    for w in [e["w"] for e in LEX["nouns"] if mpos(e["idx"], ph, ps)][:12]:
+        check(mpos(pidx(w), ph, ps), f'word-mode multi "{w}": /{ph}/ not confined to {ps}')
+
+
 # ---- (3) DATA-CORRECTNESS HARNESS: niqqud well-formedness + consistency ----
 # Structural INVARIANTS (a violation is always wrong, whatever word was meant) are
 # hard-gated via check(): they protect the runtime — e.g. a dotless ש makes sound_of()
@@ -237,6 +264,7 @@ print("=" * 60)
 print("PHONEME LEXICON / ENGINE VERIFICATION")
 print("=" * 60)
 print(f"  feasible cells   : {feasible}/{len(PHON)*3}")
+print(f"  word-mode cells  : {word_feasible}/{len(PHON)*3}")
 print(f"  sentences checked: {total}")
 print(f"  assertions       : {PASS[0]} passed, {len(FAILS)} failed")
 for m in FAILS[:20]: print("   -", m)
