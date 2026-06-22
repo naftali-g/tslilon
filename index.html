@@ -475,6 +475,11 @@
   // mirrors build_lexicon.py matches() / test_lexicon.py mpos().
   function matchPos(idx, L, ps){var p=idx[L]; if(!p||!p.length)return false; for(var i=0;i<p.length;i++){if(ps.indexOf(p[i])<0)return false;} return true;}
   function gnOf(n){return n.g+'-'+n.n;}
+  // the pastel tint a phoneme owns (cycles TINTS by phoneme index) — one definition for picker, preview pill, and progress wall
+  function tintFor(L){ var i=PHON.indexOf(L); return TINTS[((i%TINTS.length)+TINTS.length)%TINTS.length]; }
+  function glyphOf(L){ return (SOURCES[L]||L).split('/')[0]; }   // representative glyph (first of a multi-glyph source label)
+  function resetRun(){ state.sentences=[]; state.practiced={}; state.counted={}; state.celebrated=false; }   // clear an in-flight practice set
+  function dismissOnBackdrop(sel){ $(sel).addEventListener('click',function(e){ if(e.target===this) this.hidden=true; }); }
 
   // ---------- feasibility matrix (per phoneme × position) — precomputed by build_lexicon.py ----------
   var FEAS = META.feas;
@@ -482,16 +487,15 @@
   // ---------- generation engine ----------
   function candidatesFor(L, ps){
     var nouns = LEX.nouns.filter(function(e){return matchPos(e.idx,L,ps);});
-    var adjByGN={}, verbByGN={};
+    var adjByGN={}, verbByGN={}, tverbByGN={};   // tverbByGN: the transitive subset, precomputed per gender/number (was re-filtered on every tryTemplate)
     LEX.adjectives.forEach(function(e){ for(var k in GN){ var f=e.forms[k]; if(matchPos(f.idx,L,ps)) (adjByGN[GN[k]]=adjByGN[GN[k]]||[]).push(f.w); }});
-    LEX.verbs.forEach(function(e){ for(var k in GN){ var f=e.forms[k]; if(matchPos(f.idx,L,ps)) (verbByGN[GN[k]]=verbByGN[GN[k]]||[]).push({w:f.w,trans:e.trans}); }});
-    return {nouns:nouns, adjByGN:adjByGN, verbByGN:verbByGN};
+    LEX.verbs.forEach(function(e){ for(var k in GN){ var f=e.forms[k]; if(matchPos(f.idx,L,ps)){ var gn=GN[k], v={w:f.w,trans:e.trans};
+      (verbByGN[gn]=verbByGN[gn]||[]).push(v); if(e.trans) (tverbByGN[gn]=tverbByGN[gn]||[]).push(v); } }});
+    return {nouns:nouns, adjByGN:adjByGN, verbByGN:verbByGN, tverbByGN:tverbByGN};
   }
-  function tryTemplate(t, c, subj){
+  function tryTemplate(t, c, subj, objs){   // objs (nouns minus subj) is hoisted to the caller — same set for all 4 templates of a subject
     var gn = gnOf(subj);
-    var adjs = c.adjByGN[gn]||[], verbs = c.verbByGN[gn]||[];
-    var tverbs = verbs.filter(function(v){return v.trans;});
-    var objs = c.nouns.filter(function(o){return o.w!==subj.w;});
+    var adjs = c.adjByGN[gn]||[], verbs = c.verbByGN[gn]||[], tverbs = c.tverbByGN[gn]||[];
     if(t==='A' && adjs.length && verbs.length) return [subj.w, rand(adjs), rand(verbs).w];
     if(t==='C' && adjs.length && tverbs.length && objs.length) return [subj.w, rand(adjs), rand(tverbs).w, rand(objs).w];
     if(t==='B' && tverbs.length && objs.length) return [subj.w, rand(tverbs).w, rand(objs).w];
@@ -506,7 +510,8 @@
     // can't abort a feasible cell; randomness still gives variety across calls
     var nouns = shuffle(c.nouns), tmpls = shuffle(['A','C','B','D']);
     for(var i=0;i<nouns.length;i++){
-      for(var j=0;j<tmpls.length;j++){ var s=tryTemplate(tmpls[j],c,nouns[i]); if(s) return s; }
+      var subj=nouns[i], objs=c.nouns.filter(function(o){return o.w!==subj.w;});   // once per subject, not once per template
+      for(var j=0;j<tmpls.length;j++){ var s=tryTemplate(tmpls[j],c,subj,objs); if(s) return s; }
     }
     return null;
   }
@@ -590,7 +595,7 @@
     return '#'+(1<<24|r<<16|g<<8|b).toString(16).slice(1); }
   function posPreview(P, glyph){
     // word-tiles: active slot holds the chosen letter; pill + square colors come from CSS vars --lt/--ltd (set per chosen letter)
-    var on={FIRST:0,MIDDLE:1,LAST:2}[P], s='';
+    var on=POS.indexOf(P), s='';   // canonical first→middle→last order from meta
     for(var i=0;i<3;i++) s += (i===on) ? '<b class="on">'+(glyph||'')+'</b>' : '<b></b>';
     return s;
   }
@@ -600,8 +605,8 @@
     setTimeout(function(){ node.classList.remove(cls); }, 1200);
   }
 
-  PHON.forEach(function(L,i){
-    var b=el('button','tile'); b.textContent=SOURCES[L]; b.style.background=TINTS[i%TINTS.length];
+  PHON.forEach(function(L){
+    var b=el('button','tile'); b.textContent=SOURCES[L]; b.style.background=tintFor(L);
     if(SOURCES[L].indexOf('/')>=0) b.classList.add('multi');
     b.setAttribute('role','radio'); b.setAttribute('aria-checked','false');
     b.setAttribute('aria-label','הצליל '+SOURCES[L]); b.dataset.phon=L;
@@ -618,8 +623,8 @@
 
   function selectPhon(L){
     state.letter=L;
-    var glyph=(SOURCES[L]||'').split('/')[0];   // representative glyph for the position preview (keeps dagesh/dot)
-    var tint=TINTS[((PHON.indexOf(L)+TINTS.length)%TINTS.length)], dark=darken(tint);   // chosen letter's tint + a darker shade for the "chosen" pill
+    var glyph=glyphOf(L);   // representative glyph for the position preview (keeps dagesh/dot)
+    var tint=tintFor(L), dark=darken(tint);   // chosen letter's tint + a darker shade for the "chosen" pill
     each(lgrid.children,function(tile){
       var on=tile.dataset.phon===L; tile.classList.toggle('sel',on); tile.setAttribute('aria-checked',on?'true':'false');
     });
@@ -667,7 +672,7 @@
   }
   function doGenerate(){
     var res = generate(state.letter, state.positions, state.n);
-    state.sentences = res; state.practiced = {}; state.counted = {}; state.celebrated = false;
+    resetRun(); state.sentences = res;
     // always display start·middle·end in canonical order (POS), not the order the pills were tapped
     var posTxt = POS.filter(function(p){return state.positions.indexOf(p)>=0;}).map(function(p){return POS_SHORT[p];}).join(' · ');
     $('#resSummary').textContent = 'הַצְּלִיל: '+SOURCES[state.letter]+' · '+posTxt+' · '+res.length;
@@ -761,13 +766,13 @@
   $('#btnBack').addEventListener('click',function(){ show('setup'); });
   $('#btnMore').addEventListener('click',function(){ $('#celebrate').hidden=true; doGenerate(); });
   $('#btnNewLetter').addEventListener('click',function(){ $('#celebrate').hidden=true; show('setup'); });
-  $('#celebrate').addEventListener('click',function(e){ if(e.target===this) this.hidden=true; });  // tap backdrop to dismiss
+  dismissOnBackdrop('#celebrate');   // tap backdrop to dismiss
 
   // ---------- settings ----------
-  $('#btnSettings').addEventListener('click',function(){ $('#settingsSheet').hidden=false; });
-  $('#btnSettings2').addEventListener('click',function(){ $('#settingsSheet').hidden=false; });   // settings also reachable mid-practice (results screen)
+  // settings reachable from setup (btnSettings) and mid-practice (btnSettings2) — same open action
+  each([$('#btnSettings'),$('#btnSettings2')],function(b){ b.addEventListener('click',function(){ $('#settingsSheet').hidden=false; }); });
   $('#btnCloseSettings').addEventListener('click',function(){ $('#settingsSheet').hidden=true; });
-  $('#settingsSheet').addEventListener('click',function(e){ if(e.target===this) this.hidden=true; });  // tap backdrop to close
+  dismissOnBackdrop('#settingsSheet');
   var swTts=$('#swTts');
   try{ var savedTts=localStorage.getItem('talkingletters.tts'); if(savedTts!==null) state.ttsOn=(savedTts==='1'); }catch(e){}  // remember voice on/off
   if(!ttsAvailable){ state.ttsOn=false; swTts.disabled=true; }
@@ -849,18 +854,18 @@
     var box=$('#progSounds'); box.innerHTML='';
     keys.sort(function(a,b){ return (stats.sounds[b].last||0)-(stats.sounds[a].last||0); });   // most recently practiced on top
     keys.forEach(function(L){
-      var sd=stats.sounds[L], full=SOURCES[L]||L, g1=full.split('/')[0], idx=PHON.indexOf(L);
+      var sd=stats.sounds[L], full=SOURCES[L]||L, g1=glyphOf(L);
       var row=el('div','sndrow');
       var tile=el('div','stile'+(full.indexOf('/')>=0?' multi':'')); tile.textContent=full;
-      var tint=TINTS[(idx<0?0:idx)%TINTS.length]; tile.style.background=tint;   // same tint the letter has in the picker
+      var tint=tintFor(L); tile.style.background=tint;   // same tint the letter has in the picker
       var meta=el('div','meta');
       var ct=el('div','ct'); ct.textContent=sd.s+' מִשְׁפָּטִים'; meta.appendChild(ct);
       var sub=el('div','sub'); sub.textContent=Object.keys(sd.d||{}).length+' יָמִים שֶׁל תִּרְגּוּל'; meta.appendChild(sub);
       // one standalone triplet per practiced position, first→middle→last — each shows the letter in its single slot, like the picker
-      var ORDER=['FIRST','MIDDLE','LAST'], poslist=el('div','poslist');
-      ORDER.filter(function(P){ return sd.p&&sd.p[P]; }).forEach(function(P){
+      var poslist=el('div','poslist');   // canonical first→middle→last order from meta (POS)
+      POS.filter(function(P){ return sd.p&&sd.p[P]; }).forEach(function(P){
         var wt=el('div','wt');
-        ORDER.forEach(function(Q){ var b=document.createElement('b');
+        POS.forEach(function(Q){ var b=document.createElement('b');
           if(Q===P){ b.className='on'; b.textContent=g1; b.style.background=tint; b.style.borderColor='#E2DBCB'; b.style.color='#2B2B36'; }
           wt.appendChild(b); });
         poslist.appendChild(wt);
@@ -872,14 +877,13 @@
 
   // ---- onboarding (name + gender) ----
   var obGender=null;
+  function setGenderPills(g){ each(document.querySelectorAll('.gpill'),function(x){ var on=x.dataset.g===g; x.classList.toggle('on',on); x.setAttribute('aria-pressed',on?'true':'false'); }); }  // g=null clears
+  setGenderPills(null);
   each(document.querySelectorAll('.gpill'),function(p){
-    p.setAttribute('aria-pressed','false');
-    p.addEventListener('click',function(){ obGender=p.dataset.g;
-      each(document.querySelectorAll('.gpill'),function(x){ var on=x===p; x.classList.toggle('on',on); x.setAttribute('aria-pressed',on?'true':'false'); }); });
+    p.addEventListener('click',function(){ obGender=p.dataset.g; setGenderPills(obGender); });
   });
   function openOnboarding(reset){
-    if(reset){ $('#obName').value=''; obGender=null;
-      each(document.querySelectorAll('.gpill'),function(x){ x.classList.remove('on'); x.setAttribute('aria-pressed','false'); }); }
+    if(reset){ $('#obName').value=''; obGender=null; setGenderPills(null); }
     $('#onboard').hidden=false; setTimeout(function(){ try{ $('#obName').focus(); }catch(e){} },60);
   }
   function finishOnboarding(name){
@@ -888,7 +892,7 @@
     saveProfile();
     try{ localStorage.setItem(ONBOARDED,'1'); }catch(e){}                       // remember the choice so we don't re-prompt (this flag is not stats)
     stats=loadStats();                                                         // load (or start) this profile's bucket
-    state.sentences=[]; state.practiced={}; state.counted={}; state.celebrated=false;  // drop the old player's in-flight set
+    resetRun();  // drop the old player's in-flight set
     $('#onboard').hidden=true; show('setup'); renderGlance();                  // leave results so stale ribbons can't write the new profile's stats
   }
   $('#obStart').addEventListener('click',function(){ finishOnboarding($('#obName').value.trim()); });
@@ -900,7 +904,7 @@
   $('#glance').addEventListener('click',function(){ if(tracking()) openProgress(); else openOnboarding(true); });
   $('#winStats').addEventListener('click',function(){ $('#celebrate').hidden=true; openProgress(); });   // jump to full stats from the success view
   $('#btnCloseProgress').addEventListener('click',function(){ $('#progress').hidden=true; });
-  $('#progress').addEventListener('click',function(e){ if(e.target===this) this.hidden=true; });   // tap backdrop
+  dismissOnBackdrop('#progress');
   $('#progSwitch').addEventListener('click',function(){ $('#progress').hidden=true; openOnboarding(true); });
 
   renderGlance();
