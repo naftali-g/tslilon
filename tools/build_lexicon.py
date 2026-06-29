@@ -15,6 +15,7 @@ Pipeline:
 Run:  python3 tools/build_lexicon.py
 """
 
+import html
 import json
 import os
 import re
@@ -267,6 +268,49 @@ def write_coverage_md(matrix, lex):
         f.write("\n".join(lines))
 
 
+FAQ_H3P = re.compile(r"<h3>(.*?)</h3>\s*<p>(.*?)</p>", re.S)
+
+
+def check_faq_parity(tmpl):
+    """HARD build gate: the visible <details class="about"> FAQ Q/A must stay
+    byte-identical to the FAQPage JSON-LD mainEntity. Google flags mismatched FAQ
+    schema as spam, so a drift ABORTS the build before index.html is written. The
+    test oracle (test_lexicon.py) can't catch this — it checks lexicon.json, not the
+    HTML — so this is the only automated guard. Compares rendered text (HTML entities
+    unescaped) pairwise and by count."""
+    m = re.search(r'<script type="application/ld\+json">(.*?)</script>', tmpl, re.S)
+    if not m:
+        WARNINGS.append("no JSON-LD block found — skipped FAQ parity check")
+        return
+    graph = json.loads(m.group(1)).get("@graph", [])
+    faq = next((n for n in graph if n.get("@type") == "FAQPage"), None)
+    jsonld = [(q["name"], q["acceptedAnswer"]["text"])
+              for q in (faq.get("mainEntity", []) if faq else [])]
+
+    am = re.search(r'<details class="about".*?</details>', tmpl, re.S)
+    visible = [(html.unescape(q.strip()), html.unescape(a.strip()))
+               for q, a in FAQ_H3P.findall(am.group(0) if am else "")]
+
+    if not jsonld and not visible:
+        WARNINGS.append("no FAQ found in JSON-LD or <details class=about>")
+        return
+
+    errs = []
+    if len(jsonld) != len(visible):
+        errs.append(f"count differs: {len(jsonld)} in FAQPage JSON-LD vs {len(visible)} visible <h3>/<p>")
+    for i in range(min(len(jsonld), len(visible))):
+        (jq, ja), (vq, va) = jsonld[i], visible[i]
+        if jq != vq:
+            errs.append(f"[{i}] question differs:\n      JSON-LD: {jq!r}\n      visible: {vq!r}")
+        if ja != va:
+            errs.append(f"[{i}] answer differs:\n      JSON-LD: {ja!r}\n      visible: {va!r}")
+    if errs:
+        print("\nBUILD ABORTED — FAQ JSON-LD <-> visible <details> drift (spam risk):", file=sys.stderr)
+        for e in errs:
+            print("   - " + e, file=sys.stderr)
+        sys.exit(1)
+
+
 def main():
     lex = build()
     matrix = coverage(lex)
@@ -295,6 +339,7 @@ def main():
         tmpl = open(tmpl_path, encoding="utf-8").read()
         if "__LEXICON_JSON__" not in tmpl:
             WARNINGS.append("template.html has no __LEXICON_JSON__ placeholder")
+        check_faq_parity(tmpl)  # hard gate: abort if FAQ schema <-> visible <details> drift
         with open(os.path.join(ROOT, "index.html"), "w", encoding="utf-8") as f:
             f.write(tmpl.replace("__LEXICON_JSON__", minified))
         index_kb = os.path.getsize(os.path.join(ROOT, "index.html")) / 1024
